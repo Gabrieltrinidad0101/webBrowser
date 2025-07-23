@@ -1,179 +1,157 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
-
 #include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
-// Shader sources
+// Vertex shader source
 const char* vertexShaderSource = R"(
 #version 330 core
-layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
-out vec2 TexCoords;
-
-uniform mat4 projection;
+layout(location = 0) in vec3 aPos;
 
 void main() {
-    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);
-    TexCoords = vertex.zw;
+    gl_Position = vec4(aPos, 1.0);
 }
 )";
 
+// Fragment shader source con uniform color
 const char* fragmentShaderSource = R"(
 #version 330 core
-in vec2 TexCoords;
 out vec4 FragColor;
-
-uniform sampler2D text;
-uniform vec3 textColor;
+uniform vec4 uColor;
 
 void main() {
-    float alpha = texture(text, TexCoords).r;
-    FragColor = vec4(textColor, alpha);
+    FragColor = uColor;
 }
 )";
 
-// Font settings
-const int FONT_SIZE = 100;
-const int ATLAS_WIDTH = 1024;
-const int ATLAS_HEIGHT = 1024;
-stbtt_bakedchar cdata[96]; // ASCII 32..127
-GLuint atlasTexture;
-GLuint VAO, VBO;
-GLuint shaderProgram;
+// Convert pixel coords to NDC and create 4 vertices for square
+void makeSquareVertices(float x, float y, float w, float h, int windowWidth, int windowHeight, float* vertices) {
+    float ndc_x = 2.0f * x / windowWidth - 1.0f;
+    float ndc_y = 1.0f - 2.0f * y / windowHeight;
+    float ndc_w = 2.0f * w / windowWidth;
+    float ndc_h = 2.0f * h / windowHeight;
 
-void renderText(const std::string& text, float x, float y, glm::vec3 color) {
+    // Top-left
+    vertices[0] = ndc_x;
+    vertices[1] = ndc_y;
+    vertices[2] = 0.0f;
+
+    // Bottom-left
+    vertices[3] = ndc_x;
+    vertices[4] = ndc_y - ndc_h;
+    vertices[5] = 0.0f;
+
+    // Bottom-right
+    vertices[6] = ndc_x + ndc_w;
+    vertices[7] = ndc_y - ndc_h;
+    vertices[8] = 0.0f;
+
+    // Top-right
+    vertices[9] = ndc_x + ndc_w;
+    vertices[10] = ndc_y;
+    vertices[11] = 0.0f;
+}
+
+// Esta función dibuja un cuadrado con el color y posición dados
+void drawSquare(float x, float y, float w, float h, float r, float g, float b,float a,
+                int windowWidth, int windowHeight,
+                unsigned int VBO, unsigned int VAO, unsigned int shaderProgram) {
+
+    float vertices[12];
+    makeSquareVertices(x, y, w, h, windowWidth, windowHeight, vertices);
+
+    // Actualizar buffer con los vertices
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+    // Usar el shader
     glUseProgram(shaderProgram);
-    glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.r, color.g, color.b);
-    glActiveTexture(GL_TEXTURE0);
+
+    // Pasar el color como uniform
+    int colorLoc = glGetUniformLocation(shaderProgram, "uColor");
+    glUniform4f(colorLoc, r, g, b, a);
+
+
+    // Dibujar
     glBindVertexArray(VAO);
-    glBindTexture(GL_TEXTURE_2D, atlasTexture);
-
-    float xpos = x, ypos = y;
-    for (char ch : text) {
-        if (ch < 32 || ch >= 128) continue;
-
-        stbtt_aligned_quad q;
-        stbtt_GetBakedQuad(cdata, ATLAS_WIDTH, ATLAS_HEIGHT, ch - 32, &xpos, &ypos, &q, 1);
-
-        float vertices[6][4] = {
-            { q.x0, q.y1, q.s0, q.t1 },
-            { q.x0, q.y0, q.s0, q.t0 },
-            { q.x1, q.y0, q.s1, q.t0 },
-
-            { q.x0, q.y1, q.s0, q.t1 },
-            { q.x1, q.y0, q.s1, q.t0 },
-            { q.x1, q.y1, q.s1, q.t1 },
-        };
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-    }
-
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-GLuint compileShader(GLenum type, const char* source) {
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
-    int success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cerr << "Shader compile error:\n" << infoLog << std::endl;
-    }
-    return shader;
-}
-
-void initFont(const char* fontPath) {
-    // Load font into memory
-    FILE* fontFile = fopen(fontPath, "rb");
-    if (!fontFile) {
-        std::cerr << "Could not open font file\n";
-        exit(1);
-    }
-    fseek(fontFile, 0, SEEK_END);
-    int size = ftell(fontFile);
-    fseek(fontFile, 0, SEEK_SET);
-    unsigned char* fontBuffer = new unsigned char[size];
-    fread(fontBuffer, 1, size, fontFile);
-    fclose(fontFile);
-
-    // Bake font bitmap
-    unsigned char* bitmap = new unsigned char[ATLAS_WIDTH * ATLAS_HEIGHT];
-    stbtt_BakeFontBitmap(fontBuffer, 0, FONT_SIZE, bitmap, ATLAS_WIDTH, ATLAS_HEIGHT, 32, 96, cdata);
-
-    // Upload to OpenGL
-    glGenTextures(1, &atlasTexture);
-    glBindTexture(GL_TEXTURE_2D, atlasTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, ATLAS_WIDTH, ATLAS_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    delete[] bitmap;
-    delete[] fontBuffer;
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 int main() {
-    // Init GLFW and OpenGL
-    glfwInit();
+    const int windowWidth = 800;
+    const int windowHeight = 600;
+
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW\n";
+        return -1;
+    }
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Font Atlas", nullptr, nullptr);
+
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Squares with color", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create window\n";
+        glfwTerminate();
+        return -1;
+    }
     glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glViewport(0, 0, 800, 600);
 
-    // Compile shaders
-    GLuint vs = compileShader(GL_VERTEX_SHADER, vertexShaderSource);
-    GLuint fs = compileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vs);
-    glAttachShader(shaderProgram, fs);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        return -1;
+    }
+
+    unsigned int indices[] = {0, 1, 3, 1, 2, 3};
+
+    // Shaders
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+    unsigned int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    glDeleteShader(vs);
-    glDeleteShader(fs);
 
-    // Set orthographic projection
-    glm::mat4 proj = glm::ortho(0.0f, 1000.0f, 1000.0f, 0.0f);
-    glUseProgram(shaderProgram);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
-    glUniform1i(glGetUniformLocation(shaderProgram, "text"), 0);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 
-    // Load font
-    initFont("BitcountPropSingle_Cursive-Light.ttf");  // ⬅ Replace with your font path
-
-    // Set up VAO/VBO
+    // VAO, VBO, EBO
+    unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
     glBindVertexArray(VAO);
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     glBindVertexArray(0);
 
-    // Main loop
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.1f, 0.12f, 0.15f, 1.0f);
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderText("OpenGL + stb_truetype", 30.0f, 500.0f, glm::vec3(1.0, 0.9, 0.2));
-        renderText("Text looks clean!", 30.0f, 420.0f, glm::vec3(0.2, 1.0, 0.7));
-        renderText("ASCII chars only [32-127]", 30.0f, 340.0f, glm::vec3(0.8, 0.8, 0.8));
+        // Ejemplo: dibujar 3 cuadrados con diferentes colores y posiciones
+        drawSquare(49, 49, 102, 102, 1.0f, 1.0f, 0.0f,1.0f, windowWidth, windowHeight, VBO, VAO, shaderProgram);
+        drawSquare(50, 50, 100, 100, 1.0f, 0.0f, 0.0f,1.0f, windowWidth, windowHeight, VBO, VAO, shaderProgram);
+        drawSquare(200, 200, 150, 150, 0.0f, 1.0f, 0.0f,1.0f, windowWidth, windowHeight, VBO, VAO, shaderProgram);
+        drawSquare(400, 100, 120, 200, 0.0f, 0.0f, 1.0f,1.0f, windowWidth, windowHeight, VBO, VAO, shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -181,8 +159,11 @@ int main() {
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
-    glDeleteTextures(1, &atlasTexture);
+
+    glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }
