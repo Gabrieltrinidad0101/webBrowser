@@ -4,7 +4,6 @@
 #include "stb_truetype.h"
 
 #include <iostream>
-#include <map>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -31,215 +30,132 @@ out vec4 FragColor;
 uniform sampler2D text;
 uniform vec3 textColor;
 
-void main() {    
-    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    FragColor = vec4(textColor, 1.0) * sampled;
+void main() {
+    float alpha = texture(text, TexCoords).r;
+    FragColor = vec4(textColor, alpha);
 }
 )";
 
-struct Character {
-    unsigned int textureID;  // ID handle of the glyph texture
-    glm::ivec2   size;       // Size of glyph
-    glm::ivec2   bearing;    // Offset from baseline to left/top of glyph
-    unsigned int advance;    // Horizontal offset to next glyph
-};
+// Font settings
+const int FONT_SIZE = 100;
+const int ATLAS_WIDTH = 1024;
+const int ATLAS_HEIGHT = 1024;
+stbtt_bakedchar cdata[96]; // ASCII 32..127
+GLuint atlasTexture;
+GLuint VAO, VBO;
+GLuint shaderProgram;
 
-std::map<char, Character> characters;
-unsigned int VAO, VBO, shaderProgram;
-
-void renderText(const std::string& text, float x, float y, float scale, glm::vec3 color) {
-    // Activate corresponding render state	
+void renderText(const std::string& text, float x, float y, glm::vec3 color) {
     glUseProgram(shaderProgram);
-    glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.x, color.y, color.z);
+    glUniform3f(glGetUniformLocation(shaderProgram, "textColor"), color.r, color.g, color.b);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
+    glBindTexture(GL_TEXTURE_2D, atlasTexture);
 
-    // Iterate through all characters
-    for (auto c = text.begin(); c != text.end(); c++) {
-        Character ch = characters[*c];
+    float xpos = x, ypos = y;
+    for (char ch : text) {
+        if (ch < 32 || ch >= 128) continue;
 
-        float xpos = x + ch.bearing.x * scale;
-        float ypos = y - (ch.size.y - ch.bearing.y) * scale;
+        stbtt_aligned_quad q;
+        stbtt_GetBakedQuad(cdata, ATLAS_WIDTH, ATLAS_HEIGHT, ch - 32, &xpos, &ypos, &q, 1);
 
-        float w = ch.size.x * scale;
-        float h = ch.size.y * scale;
-
-        // Update VBO for each character
         float vertices[6][4] = {
-            { xpos,     ypos + h,   0.0f, 0.0f },            
-            { xpos,     ypos,       0.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
+            { q.x0, q.y1, q.s0, q.t1 },
+            { q.x0, q.y0, q.s0, q.t0 },
+            { q.x1, q.y0, q.s1, q.t0 },
 
-            { xpos,     ypos + h,   0.0f, 0.0f },
-            { xpos + w, ypos,       1.0f, 1.0f },
-            { xpos + w, ypos + h,   1.0f, 0.0f }           
+            { q.x0, q.y1, q.s0, q.t1 },
+            { q.x1, q.y0, q.s1, q.t0 },
+            { q.x1, q.y1, q.s1, q.t1 },
         };
 
-        // Render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.textureID);
-        // Update content of VBO memory
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        // Render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        // Now advance cursors for next glyph
-        x += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
     }
+
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-int main() {
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        return -1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Create window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Text Rendering", NULL, NULL);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    // Initialize GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    // Set viewport
-    glViewport(0, 0, 800, 600);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // Compile shaders
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    
-    // Check vertex shader compilation
+GLuint compileShader(GLenum type, const char* source) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, nullptr);
+    glCompileShader(shader);
     int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "Vertex shader compilation failed:\n" << infoLog << std::endl;
+        char infoLog[512];
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cerr << "Shader compile error:\n" << infoLog << std::endl;
     }
-    
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    
-    // Check fragment shader compilation
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Fragment shader compilation failed:\n" << infoLog << std::endl;
-    }
-    
-    // Link shaders
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    
-    // Check linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Shader linking failed:\n" << infoLog << std::endl;
-    }
-    
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    return shader;
+}
 
-    // Set up projection matrix
-    glm::mat4 projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
-    glUseProgram(shaderProgram);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-    // Load font with stb_truetype
-    stbtt_fontinfo font;
-    unsigned char* fontBuffer;
-    unsigned char* bitmap;
-    const int atlasWidth = 512, atlasHeight = 512;
-
-    // Load font file (replace with your own font path)
-    FILE* fontFile = fopen("ARIAL.TTF", "rb");
+void initFont(const char* fontPath) {
+    // Load font into memory
+    FILE* fontFile = fopen(fontPath, "rb");
     if (!fontFile) {
-        std::cerr << "Failed to load font file" << std::endl;
-        return -1;
+        std::cerr << "Could not open font file\n";
+        exit(1);
     }
     fseek(fontFile, 0, SEEK_END);
-    long size = ftell(fontFile);
+    int size = ftell(fontFile);
     fseek(fontFile, 0, SEEK_SET);
-    fontBuffer = (unsigned char*)malloc(size);
+    unsigned char* fontBuffer = new unsigned char[size];
     fread(fontBuffer, 1, size, fontFile);
     fclose(fontFile);
 
-    // Initialize font
-    if (!stbtt_InitFont(&font, fontBuffer, 0)) {
-        std::cerr << "Failed to initialize font" << std::endl;
-        return -1;
-    }
+    // Bake font bitmap
+    unsigned char* bitmap = new unsigned char[ATLAS_WIDTH * ATLAS_HEIGHT];
+    stbtt_BakeFontBitmap(fontBuffer, 0, FONT_SIZE, bitmap, ATLAS_WIDTH, ATLAS_HEIGHT, 32, 96, cdata);
 
-    // Create font atlas
-    bitmap = (unsigned char*)calloc(atlasWidth * atlasHeight, sizeof(unsigned char));
-    stbtt_bakedchar* cdata = (stbtt_bakedchar*)malloc(96 * sizeof(stbtt_bakedchar));
-    stbtt_BakeFontBitmap(fontBuffer, 0, 32.0, bitmap, atlasWidth, atlasHeight, 32, 96, cdata);
+    // Upload to OpenGL
+    glGenTextures(1, &atlasTexture);
+    glBindTexture(GL_TEXTURE_2D, atlasTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, ATLAS_WIDTH, ATLAS_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Generate textures for characters
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-    for (unsigned char c = 32; c < 128; c++) {
-        stbtt_bakedchar* b = cdata + (c - 32);
-        
-        // Generate texture
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            b->x1 - b->x0,
-            b->y1 - b->y0,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            bitmap + b->x0 + (b->y0 * atlasWidth)
-        );
-        
-        // Set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        
-        // Store character for later use
-        Character character = {
-            texture,
-            glm::ivec2(b->x1 - b->x0, b->y1 - b->y0),
-            glm::ivec2(b->xoff, b->yoff),
-            static_cast<unsigned int>(b->xadvance * 64.0f)
-        };
-        characters.insert(std::pair<char, Character>(c, character));
-    }
-    
-    free(bitmap);
-    free(cdata);
-    free(fontBuffer);
+    delete[] bitmap;
+    delete[] fontBuffer;
+}
 
-    // Configure VAO/VBO for texture quads
+int main() {
+    // Init GLFW and OpenGL
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Font Atlas", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glViewport(0, 0, 800, 600);
+
+    // Compile shaders
+    GLuint vs = compileShader(GL_VERTEX_SHADER, vertexShaderSource);
+    GLuint fs = compileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vs);
+    glAttachShader(shaderProgram, fs);
+    glLinkProgram(shaderProgram);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    // Set orthographic projection
+    glm::mat4 proj = glm::ortho(0.0f, 1000.0f, 1000.0f, 0.0f);
+    glUseProgram(shaderProgram);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniform1i(glGetUniformLocation(shaderProgram, "text"), 0);
+
+    // Load font
+    initFont("BitcountPropSingle_Cursive-Light.ttf");  // ⬅ Replace with your font path
+
+    // Set up VAO/VBO
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
@@ -252,29 +168,21 @@ int main() {
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
-        // Input handling
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, true);
-
-        // Rendering
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.12f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        renderText("Hello World", 50.0f, 300.0f, 1.0f, glm::vec3(1.0, 1.0, 1.0));
-        renderText("OpenGL + stb_truetype", 50.0f, 250.0f, 0.8f, glm::vec3(0.5, 0.8, 0.2));
+        renderText("OpenGL + stb_truetype", 30.0f, 500.0f, glm::vec3(1.0, 0.9, 0.2));
+        renderText("Text looks clean!", 30.0f, 420.0f, glm::vec3(0.2, 1.0, 0.7));
+        renderText("ASCII chars only [32-127]", 30.0f, 340.0f, glm::vec3(0.8, 0.8, 0.8));
 
-        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
-    for (auto& ch : characters)
-        glDeleteTextures(1, &ch.second.textureID);
-    
+    glDeleteTextures(1, &atlasTexture);
     glfwTerminate();
     return 0;
 }
