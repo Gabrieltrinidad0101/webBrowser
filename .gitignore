@@ -1,1 +1,3 @@
 vcpkg_installed/
+my-opengl-project
+*.o
