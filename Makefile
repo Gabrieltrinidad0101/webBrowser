@@ -1,6 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -std=c++17 \
-    -I/home/gabriel/Desktop/c++/opengl/vcpkg_installed/x64-linux/include
+    -I/home/gabriel/Desktop/c++/opengl/vcpkg_installed/x64-linux/include \
+    -Isrc/Render
 
 LDFLAGS = \
     -L/home/gabriel/Desktop/c++/opengl/vcpkg_installed/x64-linux/lib \
