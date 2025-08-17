@@ -13,26 +13,35 @@ enum DISPLAY
     BLOCK
 };
 
-enum JUSTIFY_CONTENT
+enum class JUSTIFY_CONTENT
 {
     CENTER,
     SPACE_BETWEEN,
-    SPACE_EVELY,
-    SPACE_ROUND
+    SPACE_EVENLY,
+    SPACE_AROUND
+};
+
+enum class ALIGN_ITEMS
+{
+    STRETCH,
+    CENTER,
+    FLEX_START,
+    FLEX_END
 };
 
 class ComponentUI
 {
 public:
+
+    int yWithBorder;
+    int xWithBorder;
+    int wWithBorder;
+    int hWithBorder;
+
     int x;
     int y;
-    int w;
-    int h;
-
-    int renderX;
-    int renderY;
-    int renderW = 0 ;
-    int renderH = 0;
+    int w = 0 ;
+    int h = 0;
     uint GAP = 0;
 
     RGBA bgColor;
@@ -50,6 +59,7 @@ public:
 
     DISPLAY display;
     JUSTIFY_CONTENT justifyContent;
+    ALIGN_ITEMS alignItems;
 
     std::vector<ComponentUI*> children;
 
@@ -59,10 +69,12 @@ public:
 
     ComponentUI& setX(int x) { this->x = x; return *this; }
     ComponentUI& setY(int y) { this->y = y; return *this; }
-    ComponentUI& setRenderW(int w) { this->renderW = w; return *this; }
-    ComponentUI& setRenderH(int h) { this->renderH = h; return *this; }
+    ComponentUI& setGAP(uint gap) { this->GAP = gap; return *this; }
+    ComponentUI& setRenderW(int w) { this->w = w; return *this; }
+    ComponentUI& setRenderH(int h) { this->h = h; return *this; }
     ComponentUI& setDisplay(DISPLAY d) { this->display = d; return *this; }
     ComponentUI& setJustifyContent(JUSTIFY_CONTENT jc) { this->justifyContent = jc; return *this; }
+    ComponentUI& setAlignItems(ALIGN_ITEMS ai) { this->alignItems = ai; return *this; }
     ComponentUI& setBgColor(const std::string& c) { this->bgColor = Color(c); return *this; }
     ComponentUI& setChildren(const std::vector<ComponentUI*>& c) { this->children = c; return *this; }
     ComponentUI& setBorderColor(const std::string& c) { this->borderColor = Color(c); return *this; }
@@ -70,7 +82,8 @@ public:
 
 private:
     void position();
-    void flex();
+    void flexJustifyContent();
+    void flexAlignItems();
 };
 
 #endif // COMPONENT_UI_H

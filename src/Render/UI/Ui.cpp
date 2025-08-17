@@ -105,30 +105,30 @@ void drawComponentUI(ComponentUI componentUI,
                      unsigned int VBO, unsigned int VAO, unsigned int shaderProgram)
 {
 
-    SquareUI squareUI(componentUI.x, componentUI.y, componentUI.w, componentUI.h, componentUI.bgColor);
+    SquareUI squareUI(componentUI.x, componentUI.y, componentUI.wWithBorder, componentUI.hWithBorder, componentUI.bgColor);
     drawSquare(squareUI, windowWidth, windowHeight, VBO, VAO, shaderProgram);
 
     if (componentUI.borderRightWidth > 0)
     {
-        SquareUI border(componentUI.x + componentUI.w, componentUI.y, componentUI.borderRightWidth, componentUI.h, componentUI.borderRightColor);
+        SquareUI border(componentUI.x + componentUI.wWithBorder, componentUI.y, componentUI.borderRightWidth, componentUI.hWithBorder, componentUI.borderRightColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
     if (componentUI.borderLeftWidth > 0)
     {
-        SquareUI border(componentUI.x - componentUI.borderLeftWidth, componentUI.y, componentUI.borderLeftWidth, componentUI.h, componentUI.borderLeftColor);
+        SquareUI border(componentUI.x - componentUI.borderLeftWidth, componentUI.y, componentUI.borderLeftWidth, componentUI.hWithBorder, componentUI.borderLeftColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
     if (componentUI.borderTopWidth > 0)
     {
-        SquareUI border(componentUI.x, componentUI.y - componentUI.borderTopWidth, componentUI.w, componentUI.borderTopWidth, componentUI.borderTopColor);
+        SquareUI border(componentUI.x, componentUI.y - componentUI.borderTopWidth, componentUI.wWithBorder, componentUI.borderTopWidth, componentUI.borderTopColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
     if (componentUI.borderBottomWidth > 0)
     {
-        SquareUI border(componentUI.x, componentUI.y + componentUI.h, componentUI.w, componentUI.borderBottomWidth, componentUI.borderBottomColor);
+        SquareUI border(componentUI.x, componentUI.y + componentUI.hWithBorder, componentUI.wWithBorder, componentUI.borderBottomWidth, componentUI.borderBottomColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 }
@@ -138,15 +138,15 @@ void justifyBetween(ComponentUI &componentUIParent, std::vector<ComponentUI> &co
     int totalChidlrenWidth = 0;
     for (ComponentUI &n : componentUIChildren)
     {
-        totalChidlrenWidth += n.w;
+        totalChidlrenWidth += n.wWithBorder;
     }
-    int gap = (componentUIParent.w - totalChidlrenWidth) / (componentUIChildren.size() - 1);
+    int gap = (componentUIParent.wWithBorder - totalChidlrenWidth) / (componentUIChildren.size() - 1);
     int pointX = componentUIParent.x;
     for (ComponentUI &n : componentUIChildren)
     {
         n.x = pointX;
         n.y = componentUIParent.y;
-        pointX += n.w + gap;
+        pointX += n.wWithBorder + gap;
     }
 }
 
@@ -154,7 +154,7 @@ void alignCenter(ComponentUI &componentUIParent, std::vector<ComponentUI> &compo
 {
     for (ComponentUI &n : componentUIChildren)
     {
-        int gap = componentUIParent.h - n.h;
+        int gap = componentUIParent.hWithBorder - n.hWithBorder;
         if (gap < 0)
         {
             continue;
@@ -258,8 +258,10 @@ void initUI()
         .setRenderW(300)
         .setRenderH(100)
         .setBgColor("green")
+        .setGAP(10)
         .setDisplay(DISPLAY::FLEX)
-        .setJustifyContent(JUSTIFY_CONTENT::SPACE_BETWEEN)
+        .setJustifyContent(JUSTIFY_CONTENT::CENTER)
+        .setAlignItems(ALIGN_ITEMS::FLEX_END)
         .setChildren({&componentChild1, &componentChild2, &componentChild3})
         .build();
 
@@ -270,10 +272,10 @@ void initUI()
         componentChild3
     };
 
+    std::cout << componentChild1.wWithBorder << std::endl;
+    std::cout << componentChild1.hWithBorder << std::endl;
     std::cout << componentChild1.w << std::endl;
     std::cout << componentChild1.h << std::endl;
-    std::cout << componentChild1.renderW << std::endl;
-    std::cout << componentChild1.renderH << std::endl;
     std::cout << componentChild1.x << std::endl;
     std::cout << componentChild1.y << std::endl;
 

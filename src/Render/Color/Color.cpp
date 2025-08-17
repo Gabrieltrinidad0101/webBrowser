@@ -32,27 +32,26 @@ int hexCharToInt(char c)
 // Convert hex string #fff or #ffffff to RGBA array
 std::array<float, 4> hexToRGBA(const std::string &hex)
 {
-    std::string h = hex;
-    if (h[0] == '#')
-        h = h.substr(1);
+    std::string hWithBorder = hex;
+    if (hWithBorder[0] == '#')
+        hWithBorder = hWithBorder.substr(1);
 
     std::array<int, 3> rgb;
 
-    if (h.length() == 3)
+    if (hWithBorder.length() == 3)
     {
-        // #RGB -> #RRGGBB
         for (int i = 0; i < 3; i++)
         {
-            int val = hexCharToInt(h[i]);
+            int val = hexCharToInt(hWithBorder[i]);
             rgb[i] = val * 16 + val;
         }
     }
-    else if (h.length() == 6)
+    else if (hWithBorder.length() == 6)
     {
         for (int i = 0; i < 3; i++)
         {
-            int hi = hexCharToInt(h[i * 2]);
-            int lo = hexCharToInt(h[i * 2 + 1]);
+            int hi = hexCharToInt(hWithBorder[i * 2]);
+            int lo = hexCharToInt(hWithBorder[i * 2 + 1]);
             rgb[i] = hi * 16 + lo;
         }
     }
