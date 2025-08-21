@@ -37,7 +37,6 @@ public:
     int xWithBorder;
     int wWithBorder;
     int hWithBorder;
-
     int x;
     int y;
     int w = 0 ;
@@ -84,6 +83,7 @@ private:
     void position();
     void flexJustifyContent();
     void flexAlignItems();
+    void defaultPosition();
 };
 
 #endif // COMPONENT_UI_H

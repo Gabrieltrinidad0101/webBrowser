@@ -67,12 +67,30 @@ void ComponentUI::flexAlignItems(){
 }
 
 
+void ComponentUI::defaultPosition(){
+    int x = this->x;
+    int y = this->y;
+    for(auto &child : this->children){
+        child->x = x;
+        child->y = y;
+        if(child->display == DISPLAY::BLOCK){
+            y += child->hWithBorder;
+        }else if (child->display == DISPLAY::INLINE){
+            x += child->wWithBorder;
+        }
+    }
+}
+
+
 void ComponentUI::position()
 {
     if (this->display == DISPLAY::FLEX){
         this->flexJustifyContent();
         this->flexAlignItems();
+        return;
     }
+
+    this->defaultPosition();
 }
 
 

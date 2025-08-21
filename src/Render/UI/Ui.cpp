@@ -265,11 +265,52 @@ void initUI()
         .setChildren({&componentChild1, &componentChild2, &componentChild3})
         .build();
 
+    
+    ComponentUI componentChild1Block;
+    componentChild1Block
+        .setRenderW(10)
+        .setRenderH(10)
+        .setBgColor("yellow")
+        .setDisplay(DISPLAY::BLOCK)
+        .build();
+
+    ComponentUI componentChild2Block;
+    componentChild2Block
+        .setRenderW(10)
+        .setRenderH(10)
+        .setDisplay(DISPLAY::INLINE)
+        .setBgColor("purple")
+        .build();
+
+    ComponentUI componentChild3Block;
+    componentChild3Block
+        .setRenderW(10)
+        .setRenderH(10)
+        .setDisplay(DISPLAY::INLINE)
+        .setBgColor("green")
+        .build();
+
+
+    ComponentUI componentParentUIBlock;
+    componentParentUIBlock.setX(200)
+        .setY(400)
+        .setRenderW(300)
+        .setRenderH(100)
+        .setBgColor("red")
+        .setGAP(10)
+        .setDisplay(DISPLAY::BLOCK)
+        .setChildren({&componentChild1Block, &componentChild2Block, &componentChild3Block})
+        .build();
+
     std::vector<ComponentUI> componentChildUIs = {
         componentParentUI,
         componentChild1,
         componentChild2,        
-        componentChild3
+        componentChild3,
+        componentParentUIBlock,
+        componentChild1Block,
+        componentChild2Block,
+        componentChild3Block
     };
 
     std::cout << componentChild1.wWithBorder << std::endl;
