@@ -9,7 +9,8 @@ struct HtmlNode {
     std::string tag;  
     std::string innerText;                     
     std::map<std::string, std::string> attributes;
-    std::vector<HtmlNode> children;             
+    std::vector<HtmlNode> children;      
+    HtmlNode* parent;      
     bool isOpen;  
 };
 
