@@ -1,148 +1,107 @@
 #include "ParserHtml.h"
 #include <vector>
+#include <map>
+#include <set>
+#include <string>
 #include <iostream>
 
-void ParserHtml::jumpSpace(const std::string &html, size_t &i)
-{
-    while (html[i] == ' ' || html[i] == '\n' || html[i] == '\t' || html[i] == '\r')
-    {
+void ParserHtml::jumpSpace(const std::string &html, size_t &i) {
+    while (i < html.size() && (html[i] == ' ' || html[i] == '\n' || html[i] == '\t' || html[i] == '\r'))
         i++;
-    }
 }
 
-std::vector<HtmlNode> ParserHtml::lexer(const std::string &html)
-{
-    std::vector<HtmlNode> tokens = {};
-    for (size_t i = 0; i < html.size(); i++)
-    {
-        std::string tag = "";
-        std::string innerText = "";
-        std::map<std::string, std::string> attributes;
-        this->jumpSpace(html, i);
-        if (html[i] == '<')
-        {
+std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
+    std::vector<HtmlNode> tokens;
+    std::set<std::string> voidTags = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"};
+
+    size_t i = 0;
+    while (i < html.size()) {
+        jumpSpace(html, i);
+
+        if (i >= html.size()) break;
+
+        if (html[i] == '<') {
             i++;
             bool isOpen = html[i] != '/';
-            if (!isOpen)
-            {
-                i++;
-            }
-            while (html[i] != ' ' && html[i] != '>')
-            {
+            if (!isOpen) i++;
+
+            std::string tag;
+            while (i < html.size() && html[i] != ' ' && html[i] != '>' && html[i] != '/') {
                 tag += html[i];
                 i++;
             }
-            this->jumpSpace(html, i);
-            if (isOpen)
-            {
-                while (html[i] != '>')
-                {
-                    std::string key = "";
-                    std::string value = "";
-                    this->jumpSpace(html, i);
-                    while (html[i] != ' ' && html[i] != '=')
-                    {
-                        key += html[i];
-                        i++;
-                    }
-                    this->jumpSpace(html, i);
-                    if (html[i] == '=')
-                    {
-                        this->jumpSpace(html, i);
-                    }
 
-                    while (html[i] != ' ' && html[i] != '>')
-                    {
-                        value += html[i];
-                        i++;
-                    }
-                    attributes[key] = value;
-                }
-                i++;
-                while (html[i] != '<')
-                {
-                    innerText += html[i];
+            jumpSpace(html, i);
+
+            std::map<std::string, std::string> attributes;
+            while (i < html.size() && html[i] != '>' && html[i] != '/') {
+                jumpSpace(html, i);
+                if (html[i] == '>' || html[i] == '/') break;
+
+                std::string key, value;
+                while (i < html.size() && html[i] != ' ' && html[i] != '=') {
+                    key += html[i];
                     i++;
                 }
-                HtmlNode node{
-                    tag,
-                    innerText,
-                    attributes,
-                    isOpen : true,
-                };
-                tokens.push_back(node);
-                i--;
-                continue;
+
+                jumpSpace(html, i);
+                if (i < html.size() && html[i] == '=') i++; // skip '='
+                jumpSpace(html, i);
+
+                char quote = '\0';
+                if (i < html.size() && (html[i] == '"' || html[i] == '\'')) {
+                    quote = html[i];
+                    i++;
+                }
+
+                while (i < html.size() && html[i] != ' ' && html[i] != '>' && (quote == '\0' || html[i] != quote)) {
+                    value += html[i];
+                    i++;
+                }
+
+                if (quote != '\0' && i < html.size() && html[i] == quote) i++; // skip closing quote
+
+                if (!key.empty()) attributes[key] = value;
             }
-            while (html[i] != '>')
-            {
+
+            bool selfClosing = false;
+            if (i < html.size() && html[i] == '/') {
+                selfClosing = true;
                 i++;
             }
-            HtmlNode node{
-                tag,
-                isOpen : false,
-            };
+            if (i < html.size() && html[i] == '>') i++;
+
+            std::string innerText;
+            if (isOpen && !selfClosing && voidTags.find(tag) == voidTags.end()) {
+                size_t textStart = i;
+                while (i < html.size() && html[i] != '<') i++;
+                innerText = html.substr(textStart, i - textStart);
+            }
+
+            HtmlNode node{tag, innerText, attributes, isOpen: true};
             tokens.push_back(node);
+            if (!isOpen || selfClosing || voidTags.find(tag) != voidTags.end()) {
+                HtmlNode closeNode{tag, "", {}, isOpen: false};
+                tokens.push_back(closeNode);
+            }
+        } else {
+            i++;
         }
     }
 
     return tokens;
 }
 
-std::ostream& operator<<(std::ostream& os, const HtmlNode& node) {
-    os << "HtmlNode{tag:" << node.tag
-       << ", isOpen:" << (node.isOpen ? "true" : "false");
-    if (node.isOpen) {
-        os << ", innerText:" << node.innerText;
-        os << ", attributes:{";
-        for (auto& kv : node.attributes)
-            os << kv.first << ":" << kv.second << " ";
-        os << "}";
-    }
-    os << "}";
-    return os;
-}
-
-// Función genérica para imprimir cualquier elemento simple
-template <typename T>
-typename std::enable_if<!std::is_class<T>::value, void>::type
-print(const T& value) {
-    std::cout << value << " ";
-}
-
-// Función genérica para imprimir cualquier objeto con operator<<
-template <typename T>
-typename std::enable_if<std::is_class<T>::value, void>::type
-print(const T& obj) {
-    std::cout << obj << " ";
-}
-
-// Función genérica para imprimir contenedores
-template <typename Container>
-void printContainer(const Container& c) {
-    for (const auto& elem : c) {
-        print(elem);
-    }
-    std::cout << std::endl;
-}
-
-void ParserHtml::parser(const std::string &html)
-{
-    HtmlNode root{
-        parent :nullptr, 
-        isOpen: true
-    };
-
+void ParserHtml::parser(const std::string &html) {
+    HtmlNode root{parent: nullptr, isOpen: true};
     HtmlNode* current = &root;
-    std::vector<HtmlNode> tokens = this->lexer(html);
+    std::vector<HtmlNode> tokens = lexer(html);
 
     for (HtmlNode& token : tokens) {
         token.parent = current;
 
         if (!token.isOpen) {
-            if (current->parent != nullptr) {
-                current = current->parent;
-            }
+            if (current->parent) current = current->parent;
         } else {
             current->children.push_back(token);
             current = &current->children.back();
