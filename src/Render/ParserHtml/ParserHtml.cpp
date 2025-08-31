@@ -45,7 +45,7 @@ std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
                 }
 
                 jumpSpace(html, i);
-                if (i < html.size() && html[i] == '=') i++; // skip '='
+                if (i < html.size() && html[i] == '=') i++; 
                 jumpSpace(html, i);
 
                 char quote = '\0';
@@ -59,7 +59,7 @@ std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
                     i++;
                 }
 
-                if (quote != '\0' && i < html.size() && html[i] == quote) i++; // skip closing quote
+                if (quote != '\0' && i < html.size() && html[i] == quote) i++; 
 
                 if (!key.empty()) attributes[key] = value;
             }
