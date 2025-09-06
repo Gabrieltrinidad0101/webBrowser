@@ -10,8 +10,9 @@ void ParserHtml::jumpSpace(const std::string &html, size_t &i) {
         i++;
 }
 
-std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
+LexerResult  ParserHtml::lexer(const std::string &html) {
     std::vector<HtmlNode> tokens;
+    std::vector<std::string> csses;
     std::set<std::string> voidTags = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"};
 
     size_t i = 0;
@@ -78,6 +79,10 @@ std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
                 innerText = html.substr(textStart, i - textStart);
             }
 
+            if(tag == "style"){
+                csses.push_back(innerText);
+            }
+
             HtmlNode node{tag, innerText, attributes, isOpen: true};
             tokens.push_back(node);
             if (!isOpen || selfClosing || voidTags.find(tag) != voidTags.end()) {
@@ -89,21 +94,24 @@ std::vector<HtmlNode> ParserHtml::lexer(const std::string &html) {
         }
     }
 
-    return tokens;
+    return LexerResult{
+        html: tokens,
+        csses
+    };
 }
 
 void ParserHtml::parser(const std::string &html) {
     HtmlNode root{parent: nullptr, isOpen: true};
     HtmlNode* current = &root;
-    std::vector<HtmlNode> tokens = lexer(html);
+    LexerResult lexerResult = lexer(html);
 
-    for (HtmlNode& token : tokens) {
-        token.parent = current;
+    for (HtmlNode& html : lexerResult.html) {
+        html.parent = current;
 
-        if (!token.isOpen) {
+        if (!html.isOpen) {
             if (current->parent) current = current->parent;
         } else {
-            current->children.push_back(token);
+            current->children.push_back(html);
             current = &current->children.back();
         }
     }
