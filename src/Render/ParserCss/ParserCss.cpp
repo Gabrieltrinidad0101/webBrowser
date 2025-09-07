@@ -141,11 +141,6 @@ void ParserCss::parser(const std::string &css)
             auto it = displayMap.find(attribute.first);
             if (it != displayMap.end())
                 cssNode.display = it->second;    
-            }
-
-            auto it = displayMap.find(attribute.first);
-            if (it != displayMap.end())
-                cssNode.display = it->second;    
-            }
         }
     }
+}
