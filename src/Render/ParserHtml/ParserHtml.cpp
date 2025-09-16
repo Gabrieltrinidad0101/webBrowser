@@ -100,7 +100,7 @@ LexerResult  ParserHtml::lexer(const std::string &html) {
     };
 }
 
-void ParserHtml::parser(const std::string &html) {
+std::pair<HtmlNode*, std::vector<std::string>> ParserHtml::parser(const std::string &html) {
     HtmlNode root{parent: nullptr, isOpen: true};
     HtmlNode* current = &root;
     LexerResult lexerResult = lexer(html);
@@ -115,4 +115,5 @@ void ParserHtml::parser(const std::string &html) {
             current = &current->children.back();
         }
     }
+    return {&root, lexerResult.csses};
 }

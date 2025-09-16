@@ -120,9 +120,10 @@ size_t removeEnd(std::string s, std::string toReplace)
     return std::stoul(s);
 }
 
-void ParserCss::parser(const std::string &css)
+std::vector<CssNode> ParserCss::parser(const std::string &css)
 {
     std::vector<CssLexer> cssesLexer = lexer(css);
+    std::vector<CssNode> cssesNode;
     for (CssLexer cssLexer : cssesLexer)
     {
         CssNode cssNode;
@@ -142,5 +143,7 @@ void ParserCss::parser(const std::string &css)
             if (it != displayMap.end())
                 cssNode.display = it->second;    
         }
+        cssesNode.push_back(cssNode);
     }
+    return cssesNode;
 }

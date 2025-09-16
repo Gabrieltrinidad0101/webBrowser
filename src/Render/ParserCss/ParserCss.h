@@ -98,7 +98,7 @@ struct CssNode
 class ParserCss
 {
 public:
-    void parser(const std::string &css);
+    std::vector<CssNode> parser(const std::string &css);
 
 private:
     std::vector<CssLexer> lexer(const std::string &css);

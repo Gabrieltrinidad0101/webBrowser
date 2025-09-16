@@ -23,7 +23,7 @@ struct LexerResult {
 
 class ParserHtml {
 public:
-    void parser(const std::string& html);
+    std::pair<HtmlNode*, std::vector<std::string>> parser(const std::string& html);
 
 private:
     LexerResult lexer(const std::string& html);
