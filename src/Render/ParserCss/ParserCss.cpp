@@ -132,16 +132,19 @@ std::vector<CssNode> ParserCss::parser(const std::string &css)
         {
             if (attribute.first == "width")
             {
-                cssNode.width = removeEnd(attribute.second, "px");
+                cssNode.cssStyle.width = removeEnd(attribute.second, "px");
             }
+
             if (attribute.first == "height")
             {
-                cssNode.height = removeEnd(attribute.second, "px");
+                cssNode.cssStyle.height = removeEnd(attribute.second, "px");
             }
+
+            
 
             auto it = displayMap.find(attribute.first);
             if (it != displayMap.end())
-                cssNode.display = it->second;    
+                cssNode.cssStyle.display = it->second;    
         }
         cssesNode.push_back(cssNode);
     }

@@ -62,14 +62,9 @@ struct Query
     QUERY_TYPE queryType;
     std::string toSearch;
     QUERY_OPERATION queryOperation;
-    bool isDone;
 };
 
-struct CssNode
-{
-    std::vector<Query> queries;
-
-    // dimentions
+struct CssStyle {
     size_t width;
     size_t height;
 
@@ -93,6 +88,12 @@ struct CssNode
     size_t borderRightWidth = 0;
     size_t borderTopWidth = 0;
     size_t borderBottomWidth = 0;
+};
+
+struct CssNode
+{
+    std::vector<Query> queries;
+    CssStyle cssStyle;
 };
 
 class ParserCss

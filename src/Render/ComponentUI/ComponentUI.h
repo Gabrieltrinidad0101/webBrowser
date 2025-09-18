@@ -41,8 +41,10 @@ public:
     int y;
     int w = 0 ;
     int h = 0;
-    uint GAP = 0;
 
+    CssStyle cssStyle;
+
+    uint GAP = 0;
     RGBA bgColor;
     RGBA borderColor;
     RGBA borderLeftColor;
