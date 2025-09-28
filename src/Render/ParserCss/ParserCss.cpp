@@ -12,6 +12,14 @@ void ParserCss::jumpSpace(const std::string &css, size_t &i)
         i++;
 }
 
+static const std::map<std::string, DISPLAY> displayMap {
+    {"flex", FLEX},
+    {"grid", GRID},
+    {"inline", INLINE},
+    {"block", BLOCK}
+};
+
+
 std::vector<CssLexer> ParserCss::lexer(const std::string &css)
 {
     std::vector<CssLexer> tokens;
@@ -120,33 +128,40 @@ size_t removeEnd(std::string s, std::string toReplace)
     return std::stoul(s);
 }
 
-std::vector<CssNode> ParserCss::parser(const std::string &css)
+std::vector<CssNode> ParserCss::parser(std::vector<std::string> csses)
 {
-    std::vector<CssLexer> cssesLexer = lexer(css);
     std::vector<CssNode> cssesNode;
-    for (CssLexer cssLexer : cssesLexer)
-    {
-        CssNode cssNode;
-        cssNode.queries = queryParser(cssLexer.query);
-        for (const auto &attribute : cssLexer.attributes)
+    for( std::string css : csses){
+        std::vector<CssLexer> cssesLexer = lexer(css);
+        for (CssLexer cssLexer : cssesLexer)
         {
-            if (attribute.first == "width")
+            CssNode cssNode;
+            cssNode.queries = queryParser(cssLexer.query);
+            for (const auto &attribute : cssLexer.attributes)
             {
-                cssNode.cssStyle.width = removeEnd(attribute.second, "px");
+                if (attribute.first == "width")
+                {
+                    cssNode.cssStyle.width = removeEnd(attribute.second, "px");
+                }
+    
+                if (attribute.first == "height")
+                {
+                    cssNode.cssStyle.height = removeEnd(attribute.second, "px");
+                }
+    
+                if (attribute.first == "background-color")
+                {
+                    cssNode.cssStyle.bgColor = Color(attribute.second);
+                }
+    
+                
+    
+                auto it = displayMap.find(attribute.first);
+                if (it != displayMap.end())
+                    cssNode.cssStyle.display = it->second;    
             }
-
-            if (attribute.first == "height")
-            {
-                cssNode.cssStyle.height = removeEnd(attribute.second, "px");
-            }
-
-            
-
-            auto it = displayMap.find(attribute.first);
-            if (it != displayMap.end())
-                cssNode.cssStyle.display = it->second;    
+            cssesNode.push_back(cssNode);
         }
-        cssesNode.push_back(cssNode);
     }
     return cssesNode;
 }

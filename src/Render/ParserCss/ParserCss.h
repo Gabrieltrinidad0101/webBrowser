@@ -33,13 +33,6 @@ enum DISPLAY
     BLOCK
 };
 
-inline std::map<std::string, DISPLAY> displayMap{
-    {"flex", FLEX},
-    {"grid", GRID},
-    {"inline", INLINE},
-    {"block", BLOCK}
-};
-
 
 enum class JUSTIFY_CONTENT
 {
@@ -99,7 +92,7 @@ struct CssNode
 class ParserCss
 {
 public:
-    std::vector<CssNode> parser(const std::string &css);
+    std::vector<CssNode> parser(std::vector<std::string> csses);
 
 private:
     std::vector<CssLexer> lexer(const std::string &css);
