@@ -1,6 +1,7 @@
 #include "Render/ParserHtml/ParserHtml.h"
 #include "Render/ParserCss/ParserCss.h"
-
+#include <iostream>
+#include <string>
 int main()
 {
     ParserHtml parser = ParserHtml();

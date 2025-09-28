@@ -6,7 +6,7 @@
 class ApplyCssToHtml
 {
 private:
-    void ApplyCssToHtml::applyCssToTag(HtmlNode *htmlNode);
+    void applyCssToTag(HtmlNode *htmlNode);
 
 public:
     void applyCss(HtmlNode *htmlNode, std::vector<CssNode> cssNodes);

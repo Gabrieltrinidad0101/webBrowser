@@ -1,5 +1,4 @@
 #include "ApplyCssToHtml.h"
-#include "Render/ComponentUI/ComponentUI.h"
 #include <iostream>
 #include <string>
 #include <set>
@@ -7,7 +6,7 @@
 std::set<std::string> getClasses(const std::string &str)
 {
     std::set<std::string> classes;
-    int i = 0;
+    size_t i = 0;
     std::string class_;
     while (i < str.size())
     {
@@ -31,13 +30,6 @@ std::set<std::string> getClasses(const std::string &str)
 
 void ApplyCssToHtml::applyCssToTag(HtmlNode *htmlNode)
 {
-    ComponentUI component;
-    if (htmlNode->tag == "div")
-    {
-        component.cssStyle = CssStyle{
-            color : {0, 0, 0, 1},
-        };
-    }
 }
 
 std::vector<HtmlNode*> seachHtmlNode(HtmlNode *htmlNode, std::vector<Query> queries,size_t queryIndex)
@@ -68,6 +60,7 @@ std::vector<HtmlNode*> seachHtmlNode(HtmlNode *htmlNode, std::vector<Query> quer
                 htmlNodes.push_back(htmlNode);
             }
         }
+        return htmlNodes;
 }
 
 void ApplyCssToHtml::applyCss(HtmlNode *htmlNode, std::vector<CssNode> cssNodes)

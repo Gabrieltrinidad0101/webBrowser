@@ -1,7 +1,6 @@
 #include <vector>
 #include <string>
 #include "Color/Color.h"
-
 #ifndef COMPONENT_UI_H
 #define COMPONENT_UI_H
 
@@ -43,7 +42,6 @@ public:
     int h = 0;
 
 
-    CssStyle cssStyle;
 
     uint GAP = 0;
     RGBA bgColor;
