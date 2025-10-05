@@ -5,20 +5,22 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <any>
+
 
 void ParserCss::jumpSpace(const std::string &css, size_t &i)
 {
-    while (i < css.size() && (css[i] == ' ' || css[i] == '\n' || css[i] == '\t' || css[i] == '\r'))
+    while (i < css.size() && (css[i] == ' ' || static_cast<int>(css[i]) == 10 || css[i] == '\t' || css[i] == '\r')){
         i++;
+
+    }
 }
 
-static const std::map<std::string, DISPLAY> displayMap {
+static const std::map<std::string, DISPLAY> displayMap{
     {"flex", FLEX},
     {"grid", GRID},
     {"inline", INLINE},
-    {"block", BLOCK}
-};
-
+    {"block", BLOCK}};
 
 std::vector<CssLexer> ParserCss::lexer(const std::string &css)
 {
@@ -47,7 +49,7 @@ std::vector<CssLexer> ParserCss::lexer(const std::string &css)
         jumpSpace(css, i);
         std::map<std::string, std::string> attributes;
 
-        while (css[i] != '}')
+        while (i < css.size() && css[i] != '}')
         {
             std::string key, value;
             while (css[i] != ':')
@@ -65,6 +67,7 @@ std::vector<CssLexer> ParserCss::lexer(const std::string &css)
                 value += css[i];
                 i++;
             }
+            i++;
             attributes[key] = value;
             jumpSpace(css, i);
         }
@@ -75,6 +78,7 @@ std::vector<CssLexer> ParserCss::lexer(const std::string &css)
 
         tokens.push_back(cssNode);
     }
+    return tokens;
 }
 
 std::vector<Query> ParserCss::queryParser(const std::string &queriesString)
@@ -128,10 +132,12 @@ size_t removeEnd(std::string s, std::string toReplace)
     return std::stoul(s);
 }
 
+
 std::vector<CssNode> ParserCss::parser(std::vector<std::string> csses)
 {
     std::vector<CssNode> cssesNode;
-    for( std::string css : csses){
+    for (std::string css : csses)
+    {
         std::vector<CssLexer> cssesLexer = lexer(css);
         for (CssLexer cssLexer : cssesLexer)
         {
@@ -143,22 +149,19 @@ std::vector<CssNode> ParserCss::parser(std::vector<std::string> csses)
                 {
                     cssNode.cssStyle.width = removeEnd(attribute.second, "px");
                 }
-    
+
                 if (attribute.first == "height")
                 {
                     cssNode.cssStyle.height = removeEnd(attribute.second, "px");
                 }
-    
+
                 if (attribute.first == "background-color")
                 {
                     cssNode.cssStyle.bgColor = Color(attribute.second);
                 }
-    
-                
-    
                 auto it = displayMap.find(attribute.first);
                 if (it != displayMap.end())
-                    cssNode.cssStyle.display = it->second;    
+                    cssNode.cssStyle.display = it->second;
             }
             cssesNode.push_back(cssNode);
         }

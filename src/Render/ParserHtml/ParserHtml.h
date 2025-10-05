@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <any>
 
 #ifndef PARSER_HTML_H
 #define PARSER_HTML_H
@@ -13,6 +14,17 @@ struct HtmlNode {
     std::vector<HtmlNode> children;      
     HtmlNode* parent;  
     bool isOpen;
+
+
+    std::map<std::string, std::any> getProperties() const {
+        return {
+            {"tag", tag},
+            {"innerText", innerText},
+            {"attributes", attributes},
+            {"children", children},
+        };
+    }
+    
 };
 
 struct LexerResult {

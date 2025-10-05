@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "Color/Color.h"
+#include <any>
 
 struct CssLexer
 {
@@ -87,12 +88,34 @@ struct CssNode
 {
     std::vector<Query> queries;
     CssStyle cssStyle;
+
+    std::map<std::string, std::any> getProperties() const {
+        return {
+            {"width", cssStyle.width},
+            {"height", cssStyle.height},
+            {"display", cssStyle.display},
+            {"justifyContent", cssStyle.justifyContent},
+            {"alignItems", cssStyle.alignItems},
+            {"color", cssStyle.color},
+            {"bgColor", cssStyle.bgColor},
+            {"borderColor", cssStyle.borderColor},
+            {"borderLeftColor", cssStyle.borderLeftColor},
+            {"borderRightColor", cssStyle.borderRightColor},
+            {"borderTopColor", cssStyle.borderTopColor},
+            {"borderBottomColor", cssStyle.borderBottomColor},
+            {"borderLeftWidth", cssStyle.borderLeftWidth},
+            {"borderRightWidth", cssStyle.borderRightWidth},
+            {"borderTopWidth", cssStyle.borderTopWidth},
+            {"borderBottomWidth", cssStyle.borderBottomWidth},
+        };
+    }
 };
 
 class ParserCss
 {
 public:
     std::vector<CssNode> parser(std::vector<std::string> csses);
+    std::map<std::string, std::any> getProperties() const;
 
 private:
     std::vector<CssLexer> lexer(const std::string &css);

@@ -65,6 +65,7 @@ std::vector<HtmlNode*> seachHtmlNode(HtmlNode *htmlNode, std::vector<Query> quer
 
 void ApplyCssToHtml::applyCss(HtmlNode *htmlNode, std::vector<CssNode> cssNodes)
 {
+    
     for(auto& cssNode : cssNodes){
         seachHtmlNode(htmlNode,cssNode.queries,0);
     }
