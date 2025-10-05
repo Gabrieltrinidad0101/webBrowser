@@ -1,6 +1,7 @@
 #include <vector>
 #include <string>
 #include "Color/Color.h"
+#include "ParserCss/ParserCss.h"
 #ifndef COMPONENT_UI_H
 #define COMPONENT_UI_H
 
@@ -38,9 +39,10 @@ public:
     int hWithBorder;
     int x;
     int y;
-    int w = 0 ;
+    int w = 0;
     int h = 0;
 
+    CssStyle cssStyle;
 
 
     uint GAP = 0;
@@ -61,7 +63,7 @@ public:
     JUSTIFY_CONTENT justifyContent;
     ALIGN_ITEMS alignItems;
 
-    std::vector<ComponentUI*> children;
+    std::vector<ComponentUI&> children;
 
     ComponentUI(){
         
@@ -76,7 +78,7 @@ public:
     ComponentUI& setJustifyContent(JUSTIFY_CONTENT jc) { this->justifyContent = jc; return *this; }
     ComponentUI& setAlignItems(ALIGN_ITEMS ai) { this->alignItems = ai; return *this; }
     ComponentUI& setBgColor(const std::string& c) { this->bgColor = Color(c); return *this; }
-    ComponentUI& setChildren(const std::vector<ComponentUI*>& c) { this->children = c; return *this; }
+    ComponentUI& setChildren(const std::vector<ComponentUI&> c) { this->children = c; return *this; }
     ComponentUI& setBorderColor(const std::string& c) { this->borderColor = Color(c); return *this; }
     void build();
 

@@ -262,7 +262,7 @@ void initUI()
         .setDisplay(DISPLAY::FLEX)
         .setJustifyContent(JUSTIFY_CONTENT::CENTER)
         .setAlignItems(ALIGN_ITEMS::FLEX_END)
-        .setChildren({&componentChild1, &componentChild2, &componentChild3})
+        .setChildren({componentChild1, componentChild2, componentChild3})
         .build();
 
     
@@ -299,7 +299,7 @@ void initUI()
         .setBgColor("red")
         .setGAP(10)
         .setDisplay(DISPLAY::BLOCK)
-        .setChildren({&componentChild1Block, &componentChild2Block, &componentChild3Block})
+        .setChildren({componentChild1Block, componentChild2Block, componentChild3Block})
         .build();
 
     std::vector<ComponentUI> componentChildUIs = {

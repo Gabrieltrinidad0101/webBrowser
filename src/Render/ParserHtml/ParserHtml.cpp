@@ -12,7 +12,7 @@ void ParserHtml::jumpSpace(const std::string &html, size_t &i) {
 
 LexerResult  ParserHtml::lexer(const std::string &html) {
     std::vector<HtmlNode> tokens;
-    std::vector<std::string> csses;
+    std::string css;
     std::set<std::string> voidTags = {"area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"};
 
     size_t i = 0;
@@ -80,7 +80,7 @@ LexerResult  ParserHtml::lexer(const std::string &html) {
             }
 
             if(tag == "style"){
-                csses.push_back(innerText);
+                css += innerText;
             }
 
             HtmlNode node{tag, innerText, attributes, isOpen: true};
@@ -96,7 +96,7 @@ LexerResult  ParserHtml::lexer(const std::string &html) {
 
     return LexerResult{
         html: tokens,
-        csses
+        css
     };
 }
 

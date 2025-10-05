@@ -29,7 +29,7 @@ struct HtmlNode {
 
 struct LexerResult {
     std::vector<HtmlNode> html;
-    std::vector<std::string> csses;
+    std::string css;
 };
 
 

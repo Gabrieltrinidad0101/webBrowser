@@ -1,4 +1,5 @@
 #include "ApplyCssToHtml.h"
+#include "ComponentUI/ComponentUI.h"
 #include <iostream>
 #include <string>
 #include <set>
@@ -28,45 +29,84 @@ std::set<std::string> getClasses(const std::string &str)
     return classes;
 }
 
+size_t removeEnd(std::string s, std::string toReplace)
+{
+    if (s.size() > toReplace.size() && s.substr(s.size() - toReplace.size()) == toReplace)
+        s = s.substr(0, s.size() - toReplace.size());
+    return std::stoul(s);
+}
+
+static const std::map<std::string, DISPLAY> displayMap {
+    {"flex", DISPLAY::FLEX},
+    {"grid", DISPLAY::GRID},
+    {"inline", DISPLAY::INLINE},
+    {"block", DISPLAY::BLOCK}};
+
 void ApplyCssToHtml::applyCssToTag(HtmlNode *htmlNode)
 {
 }
 
-std::vector<HtmlNode*> seachHtmlNode(HtmlNode *htmlNode, std::vector<Query> queries,size_t queryIndex)
+ComponentUI& ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode &htmlNode,CssNode &cssNode, size_t queryIndex)
 {
-        Query query = queries[queryIndex];
-        if (
-            (query.queryType == QUERY_TYPE::TAG && htmlNode->tag == query.toSearch) ||
-            (query.queryType == QUERY_TYPE::ID && htmlNode->attributes["id"] == query.toSearch))
+    ComponentUI componentUI;
+    Query query = cssNode.queries[queryIndex];
+    if (
+        (query.queryType == QUERY_TYPE::TAG && htmlNode.tag == query.toSearch) ||
+        (query.queryType == QUERY_TYPE::ID && htmlNode.attributes["id"] == query.toSearch))
+    {
+        queryIndex++;
+    }
+    else if (query.queryType == QUERY_TYPE::CLASS)
+    {
+        std::set<std::string> classes = getClasses(htmlNode.attributes["class"]);
+        classes.count(query.toSearch);
+        queryIndex++;
+    }
+
+    if (queryIndex == cssNode.queries.size())
+    {
+        applyAndAnalyze(componentUI,cssNode.attributes);
+        queryIndex--;
+    }
+
+    for (auto &child : htmlNode.children)
+    {
+        ComponentUI& componentUIChild = htmlNodeToComponentUI(child, cssNode, queryIndex);
+        componentUI.children.push_back(componentUIChild);
+    }
+    return componentUI;
+}
+
+void ApplyCssToHtml::applyAndAnalyze(ComponentUI componentUI,std::map<std::string, std::string> attributes)
+{
+    for (const auto &attribute : attributes)
+    {
+        if (attribute.first == "width")
         {
-            queryIndex++;
+            componentUI.cssStyle.width = removeEnd(attribute.second, "px");
         }
-        else if (query.queryType == QUERY_TYPE::CLASS)
+
+        if (attribute.first == "height")
         {
-            std::set<std::string> classes = getClasses(htmlNode->attributes["class"]);
-            classes.count(query.toSearch);
-            queryIndex++;
+            componentUI.cssStyle.height = removeEnd(attribute.second, "px");
         }
-    
-        std::vector<HtmlNode*> htmlNodes;
-        if(queryIndex == queries.size()){
-            htmlNodes.push_back(htmlNode);
-            return htmlNodes;
+
+        if (attribute.first == "background-color")
+        {
+            componentUI.cssStyle.bgColor = Color(attribute.second);
         }
-        
-        for(auto& child : htmlNode->children){
-            std::vector<HtmlNode*> htmlNodes = seachHtmlNode(&child,queries,queryIndex);
-            for(auto& htmlNode : htmlNodes ){
-                htmlNodes.push_back(htmlNode);
-            }
-        }
-        return htmlNodes;
+        auto it = displayMap.find(attribute.first);
+        if (it != displayMap.end())
+            componentUI.cssStyle.display = it->second;
+    }
 }
 
 void ApplyCssToHtml::applyCss(HtmlNode *htmlNode, std::vector<CssNode> cssNodes)
 {
-    
-    for(auto& cssNode : cssNodes){
-        seachHtmlNode(htmlNode,cssNode.queries,0);
+
+    std::vector<ComponentUI &> componentUIs;
+    for (auto &cssNode : cssNodes)
+    {
+        componentUIs = htmlNodeToComponentUI(htmlNode, cssNode, 0);
     }
 }

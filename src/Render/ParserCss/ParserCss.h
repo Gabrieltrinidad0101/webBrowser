@@ -34,7 +34,6 @@ enum DISPLAY
     BLOCK
 };
 
-
 enum class JUSTIFY_CONTENT
 {
     CENTER,
@@ -58,7 +57,8 @@ struct Query
     QUERY_OPERATION queryOperation;
 };
 
-struct CssStyle {
+struct CssStyle
+{
     size_t width;
     size_t height;
 
@@ -87,27 +87,22 @@ struct CssStyle {
 struct CssNode
 {
     std::vector<Query> queries;
-    CssStyle cssStyle;
+    std::map<std::string, std::string> attributes;
 
-    std::map<std::string, std::any> getProperties() const {
-        return {
-            {"width", cssStyle.width},
-            {"height", cssStyle.height},
-            {"display", cssStyle.display},
-            {"justifyContent", cssStyle.justifyContent},
-            {"alignItems", cssStyle.alignItems},
-            {"color", cssStyle.color},
-            {"bgColor", cssStyle.bgColor},
-            {"borderColor", cssStyle.borderColor},
-            {"borderLeftColor", cssStyle.borderLeftColor},
-            {"borderRightColor", cssStyle.borderRightColor},
-            {"borderTopColor", cssStyle.borderTopColor},
-            {"borderBottomColor", cssStyle.borderBottomColor},
-            {"borderLeftWidth", cssStyle.borderLeftWidth},
-            {"borderRightWidth", cssStyle.borderRightWidth},
-            {"borderTopWidth", cssStyle.borderTopWidth},
-            {"borderBottomWidth", cssStyle.borderBottomWidth},
-        };
+    std::map<std::string, std::any> convertToAnyMap(const std::map<std::string, std::string> &input) const
+    {
+        std::map<std::string, std::any> result;
+        for (const auto &[key, value] : input)
+        {
+            result[key] = value; 
+        }
+        return result;
+    }
+
+    std::map<std::string, std::any> getProperties() const
+    {
+        std::map<std::string, std::any> properties = convertToAnyMap(attributes);
+        return properties;
     }
 };
 
