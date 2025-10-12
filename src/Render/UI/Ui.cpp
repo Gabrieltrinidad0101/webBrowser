@@ -4,7 +4,7 @@
 #include <cstring>
 #include <vector>
 #include "ComponentUI/ComponentUI.h"
-
+#include "UI/Ui.h"
 // Vertex shader source
 const char *vertexShaderSource = R"(
 #version 330 core
@@ -105,65 +105,37 @@ void drawComponentUI(ComponentUI componentUI,
                      unsigned int VBO, unsigned int VAO, unsigned int shaderProgram)
 {
 
-    SquareUI squareUI(componentUI.x, componentUI.y, componentUI.wWithBorder, componentUI.hWithBorder, componentUI.bgColor);
+    SquareUI squareUI(componentUI.cssStyle.x, componentUI.cssStyle.y, componentUI.cssStyle.wWithBorder, componentUI.cssStyle.hWithBorder, componentUI.cssStyle.bgColor);
     drawSquare(squareUI, windowWidth, windowHeight, VBO, VAO, shaderProgram);
 
-    if (componentUI.borderRightWidth > 0)
+    if (componentUI.cssStyle.borderRightWidth > 0)
     {
-        SquareUI border(componentUI.x + componentUI.wWithBorder, componentUI.y, componentUI.borderRightWidth, componentUI.hWithBorder, componentUI.borderRightColor);
+        SquareUI border(componentUI.cssStyle.x + componentUI.cssStyle.wWithBorder, componentUI.cssStyle.y, componentUI.cssStyle.borderRightWidth, componentUI.cssStyle.hWithBorder, componentUI.cssStyle.borderRightColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
-    if (componentUI.borderLeftWidth > 0)
+    if (componentUI.cssStyle.borderLeftWidth > 0)
     {
-        SquareUI border(componentUI.x - componentUI.borderLeftWidth, componentUI.y, componentUI.borderLeftWidth, componentUI.hWithBorder, componentUI.borderLeftColor);
+        SquareUI border(componentUI.cssStyle.x - componentUI.cssStyle.borderLeftWidth, componentUI.cssStyle.y, componentUI.cssStyle.borderLeftWidth, componentUI.cssStyle.hWithBorder, componentUI.cssStyle.borderLeftColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
-    if (componentUI.borderTopWidth > 0)
+    if (componentUI.cssStyle.borderTopWidth > 0)
     {
-        SquareUI border(componentUI.x, componentUI.y - componentUI.borderTopWidth, componentUI.wWithBorder, componentUI.borderTopWidth, componentUI.borderTopColor);
+        SquareUI border(componentUI.cssStyle.x, componentUI.cssStyle.y - componentUI.cssStyle.borderTopWidth, componentUI.cssStyle.wWithBorder, componentUI.cssStyle.borderTopWidth, componentUI.cssStyle.borderTopColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 
-    if (componentUI.borderBottomWidth > 0)
+    if (componentUI.cssStyle.borderBottomWidth > 0)
     {
-        SquareUI border(componentUI.x, componentUI.y + componentUI.hWithBorder, componentUI.wWithBorder, componentUI.borderBottomWidth, componentUI.borderBottomColor);
+        SquareUI border(componentUI.cssStyle.x, componentUI.cssStyle.y + componentUI.cssStyle.hWithBorder, componentUI.cssStyle.wWithBorder, componentUI.cssStyle.borderBottomWidth, componentUI.cssStyle.borderBottomColor);
         drawSquare(border, windowWidth, windowHeight, VBO, VAO, shaderProgram);
     }
 }
 
-void justifyBetween(ComponentUI &componentUIParent, std::vector<ComponentUI> &componentUIChildren)
-{
-    int totalChidlrenWidth = 0;
-    for (ComponentUI &n : componentUIChildren)
-    {
-        totalChidlrenWidth += n.wWithBorder;
-    }
-    int gap = (componentUIParent.wWithBorder - totalChidlrenWidth) / (componentUIChildren.size() - 1);
-    int pointX = componentUIParent.x;
-    for (ComponentUI &n : componentUIChildren)
-    {
-        n.x = pointX;
-        n.y = componentUIParent.y;
-        pointX += n.wWithBorder + gap;
-    }
-}
 
-void alignCenter(ComponentUI &componentUIParent, std::vector<ComponentUI> &componentUIChildren)
-{
-    for (ComponentUI &n : componentUIChildren)
-    {
-        int gap = componentUIParent.hWithBorder - n.hWithBorder;
-        if (gap < 0)
-        {
-            continue;
-        }
-        n.y = componentUIParent.y + (gap / 2);
-    }
-}
 
-void initUI()
+void initUI(std::vector<ComponentUI*> componentChildUIs)
 {
     const int windowWidth = 800;
     const int windowHeight = 600;
@@ -231,95 +203,6 @@ void initUI()
 
     glBindVertexArray(0);
 
-    ComponentUI componentChild1;
-    componentChild1
-        .setRenderW(10)
-        .setRenderH(10)
-        .setBgColor("yellow")
-        .build();
-
-    ComponentUI componentChild2;
-    componentChild2
-        .setRenderW(10)
-        .setRenderH(10)
-        .setBgColor("red")
-        .build();
-
-    ComponentUI componentChild3;
-    componentChild3
-        .setRenderW(10)
-        .setRenderH(10)
-        .setBgColor("purple")
-        .build();
-
-    ComponentUI componentParentUI;
-    componentParentUI.setX(100)
-        .setY(100)
-        .setRenderW(300)
-        .setRenderH(100)
-        .setBgColor("green")
-        .setGAP(10)
-        .setDisplay(DISPLAY::FLEX)
-        .setJustifyContent(JUSTIFY_CONTENT::CENTER)
-        .setAlignItems(ALIGN_ITEMS::FLEX_END)
-        .setChildren({componentChild1, componentChild2, componentChild3})
-        .build();
-
-    
-    ComponentUI componentChild1Block;
-    componentChild1Block
-        .setRenderW(10)
-        .setRenderH(10)
-        .setBgColor("yellow")
-        .setDisplay(DISPLAY::BLOCK)
-        .build();
-
-    ComponentUI componentChild2Block;
-    componentChild2Block
-        .setRenderW(10)
-        .setRenderH(10)
-        .setDisplay(DISPLAY::INLINE)
-        .setBgColor("purple")
-        .build();
-
-    ComponentUI componentChild3Block;
-    componentChild3Block
-        .setRenderW(10)
-        .setRenderH(10)
-        .setDisplay(DISPLAY::INLINE)
-        .setBgColor("green")
-        .build();
-
-
-    ComponentUI componentParentUIBlock;
-    componentParentUIBlock.setX(200)
-        .setY(400)
-        .setRenderW(300)
-        .setRenderH(100)
-        .setBgColor("red")
-        .setGAP(10)
-        .setDisplay(DISPLAY::BLOCK)
-        .setChildren({componentChild1Block, componentChild2Block, componentChild3Block})
-        .build();
-
-    std::vector<ComponentUI> componentChildUIs = {
-        componentParentUI,
-        componentChild1,
-        componentChild2,        
-        componentChild3,
-        componentParentUIBlock,
-        componentChild1Block,
-        componentChild2Block,
-        componentChild3Block
-    };
-
-    std::cout << componentChild1.wWithBorder << std::endl;
-    std::cout << componentChild1.hWithBorder << std::endl;
-    std::cout << componentChild1.w << std::endl;
-    std::cout << componentChild1.h << std::endl;
-    std::cout << componentChild1.x << std::endl;
-    std::cout << componentChild1.y << std::endl;
-
 
     while (!glfwWindowShouldClose(window))
     {
@@ -329,9 +212,9 @@ void initUI()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        for (ComponentUI n : componentChildUIs)
+        for (ComponentUI *n : componentChildUIs)
         {
-            drawComponentUI(n, windowWidth, windowHeight, VBO, VAO, shaderProgram);
+            drawComponentUI(*n, windowWidth, windowHeight, VBO, VAO, shaderProgram);
         }
 
         // Ejemplo: dibujar 3 cuadrados con diferentes colores y posiciones

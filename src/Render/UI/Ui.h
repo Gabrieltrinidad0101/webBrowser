@@ -2,6 +2,6 @@
 #define UI_H
 
 
-void initUI();
+void initUI(std::vector<ComponentUI*>);
 
 #endif

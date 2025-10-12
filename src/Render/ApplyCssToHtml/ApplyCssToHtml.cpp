@@ -1,5 +1,6 @@
 #include "ApplyCssToHtml.h"
 #include "ComponentUI/ComponentUI.h"
+#include "../Utils/print.h"
 #include <iostream>
 #include <string>
 #include <set>
@@ -46,19 +47,25 @@ void ApplyCssToHtml::applyCssToTag(HtmlNode *htmlNode)
 {
 }
 
-ComponentUI& ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode &htmlNode,CssNode &cssNode, size_t queryIndex)
+ComponentUI* ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode* htmlNode,CssNode &cssNode, size_t queryIndex,std::vector<ComponentUI*> componentUIs)
 {
-    ComponentUI componentUI;
+    ComponentUI* componentUI = new ComponentUI();
     Query query = cssNode.queries[queryIndex];
-    if (
-        (query.queryType == QUERY_TYPE::TAG && htmlNode.tag == query.toSearch) ||
-        (query.queryType == QUERY_TYPE::ID && htmlNode.attributes["id"] == query.toSearch))
-    {
-        queryIndex++;
+    htmlNode->attributes["class"] = "container";
+    for (const auto& [key, value] : htmlNode->attributes) {
+        std::cout << key << ": " << value << '\n';
     }
+    if ((query.queryType == QUERY_TYPE::TAG && htmlNode->tag == query.toSearch) ||
+    (query.queryType == QUERY_TYPE::ID && 
+     htmlNode->attributes.find("id") != htmlNode->attributes.end() &&
+     htmlNode->attributes.at("id") == query.toSearch)) // safe: at() throws if missing
+{
+    queryIndex++;
+}
+
     else if (query.queryType == QUERY_TYPE::CLASS)
     {
-        std::set<std::string> classes = getClasses(htmlNode.attributes["class"]);
+        std::set<std::string> classes = getClasses(htmlNode->attributes["class"]);
         classes.count(query.toSearch);
         queryIndex++;
     }
@@ -66,47 +73,49 @@ ComponentUI& ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode &htmlNode,CssNode &c
     if (queryIndex == cssNode.queries.size())
     {
         applyAndAnalyze(componentUI,cssNode.attributes);
+        componentUI->build();
         queryIndex--;
     }
 
-    for (auto &child : htmlNode.children)
+    for (auto &child : htmlNode->children)
     {
-        ComponentUI& componentUIChild = htmlNodeToComponentUI(child, cssNode, queryIndex);
-        componentUI.children.push_back(componentUIChild);
+        ComponentUI* componentUIChild = htmlNodeToComponentUI(&child, cssNode, queryIndex,componentUIs);
+        componentUI->children.push_back(componentUIChild);
     }
+    componentUIs.push_back(componentUI);
     return componentUI;
 }
 
-void ApplyCssToHtml::applyAndAnalyze(ComponentUI componentUI,std::map<std::string, std::string> attributes)
+void ApplyCssToHtml::applyAndAnalyze(ComponentUI* componentUI,std::map<std::string, std::string> attributes)
 {
     for (const auto &attribute : attributes)
     {
         if (attribute.first == "width")
         {
-            componentUI.cssStyle.width = removeEnd(attribute.second, "px");
+            componentUI->cssStyle.width = removeEnd(attribute.second, "px");
         }
 
         if (attribute.first == "height")
         {
-            componentUI.cssStyle.height = removeEnd(attribute.second, "px");
+            componentUI->cssStyle.height = removeEnd(attribute.second, "px");
         }
 
         if (attribute.first == "background-color")
         {
-            componentUI.cssStyle.bgColor = Color(attribute.second);
+            componentUI->cssStyle.bgColor = Color(attribute.second);
         }
         auto it = displayMap.find(attribute.first);
         if (it != displayMap.end())
-            componentUI.cssStyle.display = it->second;
+            componentUI->cssStyle.display = it->second;
     }
 }
 
-void ApplyCssToHtml::applyCss(HtmlNode *htmlNode, std::vector<CssNode> cssNodes)
+std::vector<ComponentUI*> ApplyCssToHtml::applyCss(HtmlNode* htmlNode, std::vector<CssNode> cssNodes)
 {
-
-    std::vector<ComponentUI &> componentUIs;
+    std::vector<ComponentUI*> componentUIs;
     for (auto &cssNode : cssNodes)
     {
-        componentUIs = htmlNodeToComponentUI(htmlNode, cssNode, 0);
+        htmlNodeToComponentUI(htmlNode, cssNode, 0,componentUIs);
     }
+    return componentUIs;
 }

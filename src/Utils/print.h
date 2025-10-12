@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 #include <map>
+#include "ComponentUI/ComponentUI.h"
 
 // Helper to detect getProperties
 template <typename T, typename = void>
@@ -37,7 +38,6 @@ std::string valueToString(std::any value)
 
     if (value.type() == typeid(char))
         return std::string(1, std::any_cast<char>(value));
-
     if (value.type() == typeid(std::vector<std::any>))
     {
         const auto &vec = std::any_cast<const std::vector<std::any> &>(value);
@@ -108,6 +108,21 @@ inline void printVectorString(std::vector<std::string> value)
             res += ", ";
         first = false;
         res += v;
+    }
+    res += "]";
+    std::cout << res << std::endl;
+}
+
+inline void printComponentUI(std::vector<ComponentUI *> value)
+{
+    std::string res = "[";
+    bool first = true;
+    for (const auto &v : value)
+    {
+        if (!first)
+            res += ", ";
+        first = false;
+        res += valueToString(v);
     }
     res += "]";
     std::cout << res << std::endl;

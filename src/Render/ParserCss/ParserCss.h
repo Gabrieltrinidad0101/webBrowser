@@ -62,6 +62,17 @@ struct CssStyle
     size_t width;
     size_t height;
 
+    int yWithBorder;
+    int xWithBorder;
+    int wWithBorder;
+    int hWithBorder;
+    int x;
+    int y;
+    int w = 0;
+    int h = 0;
+    uint gap = 0;
+
+
     // position
     DISPLAY display;
     JUSTIFY_CONTENT justifyContent;
@@ -94,7 +105,7 @@ struct CssNode
         std::map<std::string, std::any> result;
         for (const auto &[key, value] : input)
         {
-            result[key] = value; 
+            result[key] = value;
         }
         return result;
     }
@@ -109,7 +120,7 @@ struct CssNode
 class ParserCss
 {
 public:
-    std::vector<CssNode> parser(std::vector<std::string> csses);
+    std::vector<CssNode> parser(std::string css);
     std::map<std::string, std::any> getProperties() const;
 
 private:

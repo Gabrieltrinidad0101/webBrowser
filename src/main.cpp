@@ -2,11 +2,14 @@
 #include "Render/ParserCss/ParserCss.h"
 #include <iostream>
 #include <string>
+#include "ApplyCssToHtml/ApplyCssToHtml.h"
+#include "UI/Ui.h"
+#include "Utils/print.h"
 int main()
 {
     ParserHtml parser = ParserHtml();
     ParserCss parserCss = ParserCss();
-    std::pair<HtmlNode*, std::string> values = parser.parser(R"(
+    std::pair<HtmlNode *, std::string> values = parser.parser(R"(
         <div class="container">
             <div class="child1"><div>
             <div class="child2"><div>
@@ -35,7 +38,9 @@ int main()
             }
         <style/>
     )");
-     CssNode cssesNode = parserCss.parser(values.second);
-     
+    std::vector<CssNode> cssesNode = parserCss.parser(values.second);
+    ApplyCssToHtml applyCssToHtml = ApplyCssToHtml();
+    std::vector<ComponentUI *> componentUIs = applyCssToHtml.applyCss(values.first, cssesNode);
+    initUI(componentUIs);
     return 0;
 }

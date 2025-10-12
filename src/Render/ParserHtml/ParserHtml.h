@@ -10,7 +10,7 @@
 struct HtmlNode {
     std::string tag;  
     std::string innerText;                     
-    std::map<std::string, std::string> attributes;
+    std::map<std::string, std::string> attributes = {};
     std::vector<HtmlNode> children;      
     HtmlNode* parent;  
     bool isOpen;
@@ -35,7 +35,7 @@ struct LexerResult {
 
 class ParserHtml {
 public:
-    std::pair<HtmlNode*, std::vector<std::string>> parser(const std::string& html);
+    std::pair<HtmlNode*, std::string> parser(const std::string &html);
 
 private:
     LexerResult lexer(const std::string& html);

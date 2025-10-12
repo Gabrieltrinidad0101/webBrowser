@@ -3,39 +3,39 @@
 
 void ComponentUI::flexJustifyContent()
 {
-    if (this->justifyContent == JUSTIFY_CONTENT::CENTER)
+    if (this->cssStyle.justifyContent == JUSTIFY_CONTENT::CENTER)
     {
-        int x = this->x + (this->wWithBorder - this->childrenWidth) / 2;
+        int x = this->cssStyle.x + (this->cssStyle.wWithBorder - this->childrenWidth) / 2;
         for (auto &child : this->children)
         {
-            child->x = x;
-            child->y = this->y;  
-            x += child->wWithBorder + this->GAP;
+            child->cssStyle.x = x;
+            child->cssStyle.y = this->cssStyle.y;  
+            x += child->cssStyle.wWithBorder + this->cssStyle.gap;
         }
         return;
     }
 
-    if (this->justifyContent == JUSTIFY_CONTENT::SPACE_BETWEEN)
+    if (this->cssStyle.justifyContent == JUSTIFY_CONTENT::SPACE_BETWEEN)
     {
-        int increase = (this->wWithBorder - this->childrenWidth) / (this->children.size() - 1);
-        int x = this->x;
+        int increase = (this->cssStyle.wWithBorder - this->childrenWidth) / (this->children.size() - 1);
+        int x = this->cssStyle.x;
         for (auto &child : this->children)
         {
-            child->x = x;
-            child->y = this->y;  
-            x += child->wWithBorder + increase;
+            child->cssStyle.x = x;
+            child->cssStyle.y = this->cssStyle.y;  
+            x += child->cssStyle.wWithBorder + increase;
         }
         return;
     }
 
-    if (this->justifyContent == JUSTIFY_CONTENT::SPACE_EVENLY){
-        int increase = (this->wWithBorder - this->childrenWidth) / (this->children.size() + 1);
-        int x = this->x + increase;
+    if (this->cssStyle.justifyContent == JUSTIFY_CONTENT::SPACE_EVENLY){
+        int increase = (this->cssStyle.wWithBorder - this->childrenWidth) / (this->children.size() + 1);
+        int x = this->cssStyle.x + increase;
         for (auto &child : this->children)
         {
-            child->x = x;
-            child->y = this->y;  
-            x += child->wWithBorder + increase;
+            child->cssStyle.x = x;
+            child->cssStyle.y = this->cssStyle.y;  
+            x += child->cssStyle.wWithBorder + increase;
         }
         return;
     }
@@ -43,23 +43,23 @@ void ComponentUI::flexJustifyContent()
 }
 
 void ComponentUI::flexAlignItems(){
-    if (this->alignItems == ALIGN_ITEMS::CENTER){
+    if (this->cssStyle.alignItems == ALIGN_ITEMS::CENTER){
         for (auto &child : this->children){
-            child->y = (this->w - child->wWithBorder)/2; 
+            child->cssStyle.y = (this->cssStyle.w - child->cssStyle.wWithBorder)/2; 
         }
         return;
     }
 
-    if(this->alignItems == ALIGN_ITEMS::FLEX_START){
+    if(this->cssStyle.alignItems == ALIGN_ITEMS::FLEX_START){
         for (auto &child : this->children){
-            child->y = this->h;
+            child->cssStyle.y = this->cssStyle.h;
         }
         return;
     }
 
-    if(this->alignItems == ALIGN_ITEMS::FLEX_END){
+    if(this->cssStyle.alignItems == ALIGN_ITEMS::FLEX_END){
         for (auto &child : this->children){
-            child->y = this->y + this->h - child->hWithBorder;
+            child->cssStyle.y = this->cssStyle.y + this->cssStyle.h - child->cssStyle.hWithBorder;
         }
         return;
     }
@@ -68,15 +68,15 @@ void ComponentUI::flexAlignItems(){
 
 
 void ComponentUI::defaultPosition(){
-    int x = this->x;
-    int y = this->y;
+    int x = this->cssStyle.x;
+    int y = this->cssStyle.y;
     for(auto &child : this->children){
-        child->x = x;
-        child->y = y;
-        if(child->display == DISPLAY::BLOCK){
-            y += child->hWithBorder;
-        }else if (child->display == DISPLAY::INLINE){
-            x += child->wWithBorder;
+        child->cssStyle.x = x;
+        child->cssStyle.y = y;
+        if(child->cssStyle.display == DISPLAY::BLOCK){
+            y += child->cssStyle.hWithBorder;
+        }else if (child->cssStyle.display == DISPLAY::INLINE){
+            x += child->cssStyle.wWithBorder;
         }
     }
 }
@@ -84,7 +84,7 @@ void ComponentUI::defaultPosition(){
 
 void ComponentUI::position()
 {
-    if (this->display == DISPLAY::FLEX){
+    if (this->cssStyle.display == DISPLAY::FLEX){
         this->flexJustifyContent();
         this->flexAlignItems();
         return;
@@ -98,13 +98,13 @@ void ComponentUI::position()
 void ComponentUI::build()
 {
     for (auto &child : this->children){
-        this->childrenWidth += child->wWithBorder;
+        this->childrenWidth += child->cssStyle.wWithBorder;
     }
 
-    this->wWithBorder = this->w + this->borderLeftWidth + this->borderRightWidth;
-    this->hWithBorder = this->h + this->borderTopWidth + this->borderBottomWidth;
-    this->xWithBorder = this->x - this->borderLeftWidth;
-    this->yWithBorder = this->y - this->borderLeftWidth;
+    this->cssStyle.wWithBorder = this->cssStyle.w + this->cssStyle.borderLeftWidth + this->cssStyle.borderRightWidth;
+    this->cssStyle.hWithBorder = this->cssStyle.h + this->cssStyle.borderTopWidth + this->cssStyle.borderBottomWidth;
+    this->cssStyle.xWithBorder = this->cssStyle.x - this->cssStyle.borderLeftWidth;
+    this->cssStyle.yWithBorder = this->cssStyle.y - this->cssStyle.borderLeftWidth;
 
     this->position();
 }
