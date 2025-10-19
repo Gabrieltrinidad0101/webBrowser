@@ -10,10 +10,9 @@ private:
     void applyCssToTag(HtmlNode *htmlNode);
 
 public:
-    void applyAndAnalyze(ComponentUI* componentUI, std::map<std::string, std::string> attributes);
-    std::vector<ComponentUI*> applyCss(HtmlNode* htmlNode, std::vector<CssNode> cssNodes);
-    ComponentUI* htmlNodeToComponentUI(HtmlNode* htmlNode,CssNode &cssNode, size_t queryIndex,std::vector<ComponentUI*> componentUIs);
-
+    ComponentUI* htmlNodeToComponentUI(HtmlNode* htmlNode,CssNode &cssNode, size_t queryIndex,std::vector<ComponentUI*>& componentUIs);
+    std::vector<ComponentUI *> applyCss(HtmlNode htmlNode, std::vector<CssNode> cssNodes); 
+    void applyAndAnalyze(ComponentUI *componentUI, std::map<std::string, std::string> attributes);
 };
 
 #endif // APPLY_CSS_TO_HTML_H

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <any>
-
+#include "../Utils/print.h"
 
 void ParserCss::jumpSpace(const std::string &css, size_t &i)
 {
@@ -68,6 +68,11 @@ std::vector<CssLexer> ParserCss::lexer(const std::string &css)
             jumpSpace(css, i);
         }
 
+        if(css[i] == '}'){
+            i++;
+        }
+        jumpSpace(css, i);
+
         CssLexer cssNode{
             query,
             attributes};
@@ -86,11 +91,12 @@ std::vector<Query> ParserCss::queryParser(const std::string &queriesString)
         jumpSpace(queriesString, i);
         QUERY_TYPE queryType = TAG;
         std::string toSearch;
-        if (i == '.')
+        print(queriesString[i]);
+        if (queriesString[i] == '.')
         {
             queryType = CLASS;
         }
-        else if (i == '#')
+        else if (queriesString[i] == '#')
         {
             queryType = ID;
         }
