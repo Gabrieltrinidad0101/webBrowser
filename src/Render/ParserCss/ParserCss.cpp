@@ -90,8 +90,7 @@ std::vector<Query> ParserCss::queryParser(const std::string &queriesString)
     {
         jumpSpace(queriesString, i);
         QUERY_TYPE queryType = TAG;
-        std::string toSearch;
-        print(queriesString[i]);
+        std::string toSearch = "";
         if (queriesString[i] == '.')
         {
             queryType = CLASS;
@@ -105,7 +104,7 @@ std::vector<Query> ParserCss::queryParser(const std::string &queriesString)
             i++;
         }
 
-        while (queriesString[i] != ' ')
+        while (i < queriesString.size() && queriesString[i] != ' ')
         {
             toSearch += queriesString[i];
             i++;
@@ -116,7 +115,6 @@ std::vector<Query> ParserCss::queryParser(const std::string &queriesString)
         {
             queryOperation = ONLY_CHILDREN;
         }
-
         Query query{
             queryType,
             toSearch,

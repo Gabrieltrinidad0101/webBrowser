@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <map>
 #include "ComponentUI/ComponentUI.h"
+#include "ParserHtml/ParserHtml.h"
 
 // Helper to detect getProperties
 template <typename T, typename = void>
@@ -132,4 +133,13 @@ template <typename T = int>
 void print(const std::any &value)
 {
     std::cout << valueToString<T>(value) << std::endl;
+}
+
+
+inline void printTree(HtmlNode htmlNode,std::string str1 = ""){
+    std::cout << str1 << htmlNode.tag << std::endl;
+    for(HtmlNode child : htmlNode.children){
+        str1 += "  ";
+        printTree(child,str1);
+    }
 }

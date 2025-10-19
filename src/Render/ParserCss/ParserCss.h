@@ -28,6 +28,7 @@ enum QUERY_OPERATION
 
 enum DISPLAY
 {
+    DEFAULT,
     FLEX,
     GRID,
     INLINE,
@@ -36,6 +37,7 @@ enum DISPLAY
 
 enum class JUSTIFY_CONTENT
 {
+    DEFAULT,
     CENTER,
     SPACE_BETWEEN,
     SPACE_EVENLY,
@@ -44,6 +46,7 @@ enum class JUSTIFY_CONTENT
 
 enum class ALIGN_ITEMS
 {
+    DEFAULT,
     STRETCH,
     CENTER,
     FLEX_START,
@@ -68,8 +71,6 @@ struct CssStyle
     int hWithBorder;
     int x;
     int y;
-    int w = 0;
-    int h = 0;
     uint gap = 0;
 
 

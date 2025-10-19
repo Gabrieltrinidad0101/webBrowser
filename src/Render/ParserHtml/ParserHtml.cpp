@@ -102,12 +102,18 @@ LexerResult ParserHtml::lexer(const std::string &html)
                 css += innerText;
             }
 
-            HtmlNode node{tag, innerText, attributes, isOpen : true};
-            tokens.push_back(node);
+            HtmlNode node{tag, innerText, attributes, isOpen: isOpen};
+            if (tag != "style")
+            {
+                tokens.push_back(node);
+            }
             if (!isOpen || selfClosing || voidTags.find(tag) != voidTags.end())
             {
                 HtmlNode closeNode{tag, "", {}, isOpen : false};
-                tokens.push_back(closeNode);
+                if (tag != "style")
+                {
+                    tokens.push_back(closeNode);
+                }
             }
         }
         else

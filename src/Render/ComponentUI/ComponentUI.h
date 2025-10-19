@@ -21,8 +21,8 @@ public:
     ComponentUI& setX(int x) { this->cssStyle.x = x; return *this; }
     ComponentUI& setY(int y) { this->cssStyle.y = y; return *this; }
     ComponentUI& setGAP(uint gap) { this->cssStyle.gap = gap; return *this; }
-    ComponentUI& setRenderW(int w) { this->cssStyle.w = w; return *this; }
-    ComponentUI& setRenderH(int h) { this->cssStyle.h = h; return *this; }
+    ComponentUI& setRenderW(int w) { this->cssStyle.width = w; return *this; }
+    ComponentUI& setRenderH(int h) { this->cssStyle.height = h; return *this; }
     ComponentUI& setDisplay(DISPLAY d) { this->cssStyle.display = d; return *this; }
     ComponentUI& setJustifyContent(JUSTIFY_CONTENT jc) { this->cssStyle.justifyContent = jc; return *this; }
     ComponentUI& setAlignItems(ALIGN_ITEMS ai) { this->cssStyle.alignItems = ai; return *this; }

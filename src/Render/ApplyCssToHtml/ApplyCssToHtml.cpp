@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <map>
 
 std::set<std::string> getClasses(const std::string &str)
 {
@@ -17,8 +18,9 @@ std::set<std::string> getClasses(const std::string &str)
             classes.insert(class_);
             class_ = "";
         }
-        while (str[i] != ' ')
+        while (i < str.size() && str[i] != ' ')
         {
+            class_ += str[i];
             i++;
         }
     }
@@ -47,43 +49,41 @@ void ApplyCssToHtml::applyCssToTag(HtmlNode *htmlNode)
 {
 }
 
-ComponentUI *ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode *htmlNode, CssNode &cssNode, size_t queryIndex, std::vector<ComponentUI *> &componentUIs)
+ComponentUI *ApplyCssToHtml::htmlNodeToComponentUI(HtmlNode *htmlNode, std::vector<CssNode> &cssesNode,std::map<int,int> cssIndexQueryIndex, std::vector<ComponentUI *> &componentUIs)
 {
     ComponentUI *componentUI = new ComponentUI();
-    Query query = cssNode.queries[queryIndex];
-    for (const auto &[key, value] : htmlNode->attributes)
-    {
-        std::cout << key << ": " << value << '\n';
-    }
-    if ((query.queryType == QUERY_TYPE::TAG && htmlNode->tag == query.toSearch) ||
-        (query.queryType == QUERY_TYPE::ID &&
-         htmlNode->attributes.find("id") != htmlNode->attributes.end() &&
-         htmlNode->attributes.at("id") == query.toSearch)) // safe: at() throws if missing
-    {
-        queryIndex++;
-    }
-
-    else if (query.queryType == QUERY_TYPE::CLASS)
-    {
-        std::set<std::string> classes = getClasses(htmlNode->attributes["class"]);
-        if (classes.count(query.toSearch) == 1)
+    for(size_t i = 0; i < cssesNode.size(); i++){
+        Query query = cssesNode[i].queries[cssIndexQueryIndex[i]];
+        if ((query.queryType == QUERY_TYPE::TAG && htmlNode->tag == query.toSearch) ||
+            (query.queryType == QUERY_TYPE::ID &&
+             htmlNode->attributes.find("id") != htmlNode->attributes.end() &&
+             htmlNode->attributes.at("id") == query.toSearch))
         {
-            queryIndex++;
+            cssIndexQueryIndex[i] += 1;
+        }
+    
+        else if (query.queryType == QUERY_TYPE::CLASS)
+        {
+            std::set<std::string> classes = getClasses(htmlNode->attributes["class"]);
+            if (classes.count(query.toSearch) == 1)
+            {
+                cssIndexQueryIndex[i] += 1;
+            }
+        }
+        if (cssIndexQueryIndex[i] == cssesNode[i].queries.size())
+        {
+            applyAndAnalyze(componentUI, cssesNode[i].attributes);
+            cssIndexQueryIndex[i] -= 1;
         }
     }
 
-    if (queryIndex == cssNode.queries.size())
-    {
-        applyAndAnalyze(componentUI, cssNode.attributes);
-        componentUI->build();
-        queryIndex--;
-    }
 
     for (auto &child : htmlNode->children)
     {
-        ComponentUI *componentUIChild = htmlNodeToComponentUI(&child, cssNode, queryIndex, componentUIs);
+        ComponentUI *componentUIChild = htmlNodeToComponentUI(&child, cssesNode, cssIndexQueryIndex, componentUIs);
         componentUI->children.push_back(componentUIChild);
     }
+    componentUI->build();
     componentUIs.push_back(componentUI);
     return componentUI;
 }
@@ -102,6 +102,38 @@ void ApplyCssToHtml::applyAndAnalyze(ComponentUI *componentUI, std::map<std::str
             componentUI->cssStyle.height = removeEnd(attribute.second, "px");
         }
 
+        if (attribute.first == "margin-left")
+        {
+            componentUI->cssStyle.x = removeEnd(attribute.second, "px");
+        }
+
+        if (attribute.first == "margin-top")
+        {
+            componentUI->cssStyle.y = removeEnd(attribute.second, "px");
+        }
+
+        if(attribute.first == "align-item"){
+            if(attribute.second == "center"){
+                componentUI->cssStyle.alignItems = ALIGN_ITEMS::CENTER;
+            }
+            if(attribute.second == "flex-start"){
+                componentUI->cssStyle.alignItems = ALIGN_ITEMS::FLEX_START;
+            }
+            if(attribute.second == "flex-end"){
+                componentUI->cssStyle.alignItems = ALIGN_ITEMS::FLEX_END;
+            }
+        }
+
+        if (attribute.first == "justify-content")
+        {
+            if(attribute.second == "space-between"){
+                componentUI->cssStyle.justifyContent = JUSTIFY_CONTENT::SPACE_BETWEEN;
+            }
+            if(attribute.second == "center"){
+                componentUI->cssStyle.justifyContent = JUSTIFY_CONTENT::CENTER;
+            }
+        }
+
         if (attribute.first == "background-color")
         {
             componentUI->cssStyle.bgColor = Color(attribute.second);
@@ -114,10 +146,12 @@ void ApplyCssToHtml::applyAndAnalyze(ComponentUI *componentUI, std::map<std::str
 
 std::vector<ComponentUI *> ApplyCssToHtml::applyCss(HtmlNode htmlNode, std::vector<CssNode> cssNodes)
 {
-    std::vector<ComponentUI *> componentUIs;
-    for (auto &cssNode : cssNodes)
-    {
-        htmlNodeToComponentUI(&htmlNode, cssNode, 0, componentUIs);
+    std::map<int,int> cssIndexQueryIndex;
+    for(size_t i = 0; i < cssNodes.size(); i++){
+        cssIndexQueryIndex[i] = 0;
     }
+    std::vector<ComponentUI *> componentUIs;
+    print(cssNodes[0].queries[0].toSearch);
+    htmlNodeToComponentUI(&htmlNode, cssNodes, cssIndexQueryIndex, componentUIs);
     return componentUIs;
 }
