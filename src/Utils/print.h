@@ -36,7 +36,10 @@ std::string valueToString(std::any value)
 
     if (value.type() == typeid(const char *))
         return std::string(std::any_cast<const char *>(value));
-
+    if (value.type() == typeid(RGBA)){
+        RGBA color = std::any_cast<RGBA>(value);
+        return valueToString<int>(color[0]) + ", " + valueToString<int>(color[1]) + ", " + valueToString<int>(color[2]) + ", " + valueToString<int>(color[3]);
+    }
     if (value.type() == typeid(char))
         return std::string(1, std::any_cast<char>(value));
     if (value.type() == typeid(std::vector<std::any>))
@@ -114,32 +117,47 @@ inline void printVectorString(std::vector<std::string> value)
     std::cout << res << std::endl;
 }
 
-inline void printComponentUI(std::vector<ComponentUI *> value)
-{
-    std::string res = "[";
-    bool first = true;
-    for (const auto &v : value)
-    {
-        if (!first)
-            res += ", ";
-        first = false;
-        res += valueToString(v);
-    }
-    res += "]";
-    std::cout << res << std::endl;
-}
 
 template <typename T = int>
-void print(const std::any &value)
+void print(const std::any &value,std::string str1 = "")
 {
-    std::cout << valueToString<T>(value) << std::endl;
+    std::cout << str1 << valueToString<T>(value) << std::endl;
 }
 
 
-inline void printTree(HtmlNode htmlNode,std::string str1 = ""){
-    std::cout << str1 << htmlNode.tag << std::endl;
-    for(HtmlNode child : htmlNode.children){
-        str1 += "  ";
+inline void printTree(HtmlNode* htmlNode,std::string str1 = ""){
+    std::cout << str1 << htmlNode->tag << std::endl;
+    str1 += "  ";
+    for(HtmlNode* child : htmlNode->children){
         printTree(child,str1);
+    }
+}
+
+inline void printComponentUIs(std::vector<ComponentUI *> componentUIs){
+    for(ComponentUI* componentUI : componentUIs){
+        print(componentUI->tag);
+        print(std::to_string(componentUI->cssStyle.x));
+        print(std::to_string(componentUI->cssStyle.y));
+        print(std::to_string(componentUI->cssStyle.width));
+        print(std::to_string(componentUI->cssStyle.height));
+        print(componentUI->cssStyle.bgColor);
+        print(componentUI->children.size());
+        print(componentUI->cssStyle.display);
+        print("-----------");
+    }
+}
+
+inline void printComponentUI(ComponentUI* componentUI,std::string str1 = ""){
+    print(componentUI->tag,str1);
+    // print(std::to_string(componentUI->cssStyle.x),str1);
+    // print(std::to_string(componentUI->cssStyle.y),str1);
+    // print(std::to_string(componentUI->cssStyle.width),str1);
+    // print(std::to_string(componentUI->cssStyle.height),str1);
+    // print(componentUI->cssStyle.bgColor,str1);
+    print(componentUI->children.size(),str1);
+    // print(componentUI->cssStyle.display,str1);
+    str1 += "  ";
+    for(ComponentUI* child : componentUI->children){
+        printComponentUI(child,str1);
     }
 }

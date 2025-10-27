@@ -13,10 +13,7 @@ public:
     CssStyle cssStyle;
     std::vector<ComponentUI*> children;
     size_t childrenWidth = 0;
-
-    ComponentUI(){
-        
-    };
+    std::string tag = "";
 
     ComponentUI& setX(int x) { this->cssStyle.x = x; return *this; }
     ComponentUI& setY(int y) { this->cssStyle.y = y; return *this; }

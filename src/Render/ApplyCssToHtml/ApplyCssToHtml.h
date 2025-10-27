@@ -9,9 +9,11 @@ class ApplyCssToHtml
 private:
     void applyCssToTag(HtmlNode *htmlNode);
 
+    void convertTreeToArray(ComponentUI *componentUI, std::vector<ComponentUI *> &componentUIs);
+
 public:
-    ComponentUI* htmlNodeToComponentUI(HtmlNode *htmlNode, std::vector<CssNode> &cssesNode,std::map<int,int> cssIndexQueryIndex, std::vector<ComponentUI *> &componentUIs);
-    std::vector<ComponentUI *> applyCss(HtmlNode htmlNode, std::vector<CssNode> cssNodes); 
+    ComponentUI* htmlNodeToComponentUI(HtmlNode *htmlNode, std::vector<CssNode> &cssesNode,std::map<int,int> cssIndexQueryIndex);
+    std::vector<ComponentUI *> applyCss(HtmlNode* htmlNode, std::vector<CssNode> cssNodes);
     void applyAndAnalyze(ComponentUI *componentUI, std::map<std::string, std::string> attributes);
 };
 

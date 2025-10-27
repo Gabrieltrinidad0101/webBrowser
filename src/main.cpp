@@ -9,10 +9,12 @@ int main()
 {
     ParserHtml parser = ParserHtml();
     ParserCss parserCss = ParserCss();
-    std::pair<HtmlNode, std::string> values = parser.parser(R"(
+    std::pair<HtmlNode*, std::string> values = parser.parser(R"(
         <div class="container">
-            <div class="child1"> </div>
-            <div class="child2"> </div>
+            <div class="child1">
+            </div>
+            <div class="child2">
+            </div>
         </div>
 
         <style>

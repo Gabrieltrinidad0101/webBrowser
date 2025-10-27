@@ -107,13 +107,10 @@ LexerResult ParserHtml::lexer(const std::string &html)
             {
                 tokens.push_back(node);
             }
-            if (!isOpen || selfClosing || voidTags.find(tag) != voidTags.end())
+            if (selfClosing && voidTags.find(tag) == voidTags.end())
             {
                 HtmlNode closeNode{tag, "", {}, isOpen : false};
-                if (tag != "style")
-                {
-                    tokens.push_back(closeNode);
-                }
+                tokens.push_back(closeNode);
             }
         }
         else
@@ -128,25 +125,38 @@ LexerResult ParserHtml::lexer(const std::string &html)
     };
 }
 
-std::pair<HtmlNode, std::string> ParserHtml::parser(const std::string &html)
+std::pair<HtmlNode*, std::string> ParserHtml::parser(const std::string &html)
 {
-    HtmlNode root{parent : nullptr, isOpen : true};
-    HtmlNode *current = &root;
     LexerResult lexerResult = lexer(html);
 
-    for (HtmlNode &html : lexerResult.html)
+    // Allocate root on the heap
+    HtmlNode* root = new HtmlNode{"root", "", {}, {}, nullptr, true};
+    HtmlNode* current = root;
+
+    for (HtmlNode &htmlNode : lexerResult.html)
     {
-        html.parent = current;
-        if (!html.isOpen)
+        // Allocate a copy on the heap
+        HtmlNode* node = new HtmlNode{
+            htmlNode.tag,
+            htmlNode.innerText,
+            htmlNode.attributes,
+            {},        // children start empty
+            current,   // parent
+            htmlNode.isOpen
+        };
+
+        
+        if (node->isOpen)
         {
-            if (current->parent)
-                current = current->parent;
+            current->children.push_back(node);
+            current = node;
         }
-        else
+        else if (current->parent)
         {
-            current->children.push_back(html);
-            current = &current->children.back();
+            current = current->parent;
         }
     }
+
+    printTree(root);
     return {root, lexerResult.css};
 }

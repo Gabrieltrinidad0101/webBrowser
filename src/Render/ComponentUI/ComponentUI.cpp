@@ -1,5 +1,6 @@
 #include "ComponentUI.h"
 #include <iostream>
+#include "../Utils/print.h"
 
 void ComponentUI::flexJustifyContent()
 {
@@ -17,7 +18,10 @@ void ComponentUI::flexJustifyContent()
 
     if (this->cssStyle.justifyContent == JUSTIFY_CONTENT::SPACE_BETWEEN)
     {
-        int increase = (this->cssStyle.wWithBorder - this->childrenWidth) / (this->children.size() - 1);
+        int increase = 0;
+        if(this->children.size() > 1){
+            increase = (this->cssStyle.wWithBorder - this->childrenWidth) / (this->children.size() - 1);
+        }
         int x = this->cssStyle.x;
         for (auto &child : this->children)
         {
@@ -97,7 +101,7 @@ void ComponentUI::position()
 
 void ComponentUI::build()
 {
-    for (auto &child : this->children){
+    for (ComponentUI* child : this->children){
         this->childrenWidth += child->cssStyle.wWithBorder;
     }
 

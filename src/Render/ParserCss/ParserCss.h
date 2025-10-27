@@ -65,10 +65,10 @@ struct CssStyle
     size_t width;
     size_t height;
 
-    int yWithBorder;
-    int xWithBorder;
-    int wWithBorder;
-    int hWithBorder;
+    int yWithBorder  = 0;
+    int xWithBorder  = 0;
+    int wWithBorder = 0;
+    int hWithBorder = 0;
     int x;
     int y;
     uint gap = 0;
